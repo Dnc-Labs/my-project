@@ -25,3 +25,9 @@
 4. Người học tự code
 5. Review code + nhận xét
 6. Refactor nếu cần
+
+### Lưu trữ lý thuyết
+- Sau mỗi buổi học (hoặc khi kết thúc một chủ đề trong ROADMAP), **tổng hợp toàn bộ lý thuyết + câu hỏi/trả lời** vào file riêng trong thư mục `docs/`
+- Đặt tên file theo mục ROADMAP, ví dụ: `docs/0.1-spring-core-di.md`, `docs/0.2-spring-boot-basics.md`
+- Nội dung giữ nguyên phong cách hội thoại: lý thuyết, ví dụ code, câu hỏi của người học và câu trả lời
+- Mục đích: để tra cứu lại khi cần, đồng bộ kiến thức khi học trên nhiều máy khác nhau
