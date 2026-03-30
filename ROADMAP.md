@@ -2,11 +2,11 @@
 
 ## Giai đoạn 0: Nền tảng Spring (1-2 tuần)
 
-### 0.1 - Spring Core & Dependency Injection
-- [ ] Hiểu khái niệm **IoC Container**, **Bean**, **Dependency Injection** (Constructor Injection vs Field Injection)
-- [ ] So sánh với cách quản lý dependency trong Node.js (require/import) để hiểu sự khác biệt
-- [ ] Tạo project Spring Boot đầu tiên bằng **Spring Initializr**
-- [ ] Viết các Bean đơn giản, sử dụng `@Component`, `@Service`, `@Repository`, `@Configuration`
+### 0.1 - Spring Core & Dependency Injection ✅
+- [x] Hiểu khái niệm **IoC Container**, **Bean**, **Dependency Injection** (Constructor Injection vs Field Injection)
+- [x] So sánh với cách quản lý dependency trong Node.js (require/import) để hiểu sự khác biệt
+- [x] Tạo project Spring Boot đầu tiên bằng **Spring Initializr**
+- [x] Viết các Bean đơn giản, sử dụng `@Component`, `@Service`, `@Repository`, `@Configuration`
 
 ### 0.2 - Spring Boot Basics
 - [ ] Hiểu cấu trúc project: `controller` → `service` → `repository` → `entity`
