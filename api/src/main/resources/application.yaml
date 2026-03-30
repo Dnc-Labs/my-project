@@ -1,3 +1,9 @@
+server:
+  port: 8081
 spring:
   application:
-    name: api
+    name: my-app
+app:
+  name: my-app
+  version: "1.0"
+  description: "This is learning app"

@@ -8,11 +8,11 @@
 - [x] Tạo project Spring Boot đầu tiên bằng **Spring Initializr**
 - [x] Viết các Bean đơn giản, sử dụng `@Component`, `@Service`, `@Repository`, `@Configuration`
 
-### 0.2 - Spring Boot Basics
-- [ ] Hiểu cấu trúc project: `controller` → `service` → `repository` → `entity`
-- [ ] Hiểu `application.properties` / `application.yml`
-- [ ] Viết REST API đơn giản (CRUD) với `@RestController`, `@GetMapping`, `@PostMapping`...
-- [ ] Hiểu **Bean lifecycle**, **Bean scope** (Singleton vs Prototype)
+### 0.2 - Spring Boot Basics ✅
+- [x] Hiểu cấu trúc project: `controller` → `service` → `repository` → `entity`
+- [x] Hiểu `application.properties` / `application.yml`
+- [x] Viết REST API đơn giản (CRUD) với `@RestController`, `@GetMapping`, `@PostMapping`...
+- [x] Hiểu **Bean lifecycle**, **Bean scope** (Singleton vs Prototype)
 
 ### 0.3 - Spring Data JPA & Database
 - [ ] Hiểu **ORM**, **JPA**, **Hibernate** là gì (so sánh với Sequelize/Prisma bên Node.js)
