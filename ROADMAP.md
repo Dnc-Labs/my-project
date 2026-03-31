@@ -14,11 +14,11 @@
 - [x] Viết REST API đơn giản (CRUD) với `@RestController`, `@GetMapping`, `@PostMapping`...
 - [x] Hiểu **Bean lifecycle**, **Bean scope** (Singleton vs Prototype)
 
-### 0.3 - Spring Data JPA & Database
-- [ ] Hiểu **ORM**, **JPA**, **Hibernate** là gì (so sánh với Sequelize/Prisma bên Node.js)
-- [ ] Kết nối **MySQL/PostgreSQL**
-- [ ] Tạo `@Entity`, viết `Repository` interface
-- [ ] Hiểu **relationship mapping**: `@OneToMany`, `@ManyToOne`, `@ManyToMany`
+### 0.3 - Spring Data JPA & Database ✅
+- [x] Hiểu **ORM**, **JPA**, **Hibernate** là gì (so sánh với Sequelize/Prisma bên Node.js)
+- [x] Kết nối **MySQL/PostgreSQL**
+- [x] Tạo `@Entity`, viết `Repository` interface
+- [x] Hiểu **relationship mapping**: `@OneToMany`, `@ManyToOne`, `@ManyToMany`
 
 ### 0.4 - Multi-threading cơ bản
 - [ ] Hiểu **Thread**, **Runnable**, **Callable** trong Java

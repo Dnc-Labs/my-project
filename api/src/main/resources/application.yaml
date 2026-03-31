@@ -3,6 +3,14 @@ server:
 spring:
   application:
     name: my-app
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce
+    username: root
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 app:
   name: my-app
   version: "1.0"
