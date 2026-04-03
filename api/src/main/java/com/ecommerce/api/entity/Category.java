@@ -1,25 +1,47 @@
 package com.ecommerce.api.entity;
 
 import jakarta.persistence.*;
-
 import java.util.List;
 
 @Entity
-
+@Table(name = "categories")
 public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    public List<Category> getChildren() {
+        return children;
+    }
 
+    public void setChildren(List<Category> children) {
+        this.children = children;
+    }
+
+    public Category getParent() {
+        return parent;
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
+    }
+
+    private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
+    // TODO: Thêm relationship cho nested category (danh mục cha/con):
+    // - parent: nhiều Category con thuộc 1 Category cha (@ManyToOne, optional)
+    // - children: 1 Category cha có nhiều Category con (@OneToMany)
+
+    @OneToMany(mappedBy = "parent")
+    private List<Category> children;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Category parent;
 
     public Long getId() {
         return id;
@@ -45,11 +67,4 @@ public class Category {
         this.description = description;
     }
 
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
-    }
 }

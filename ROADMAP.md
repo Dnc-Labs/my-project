@@ -20,23 +20,23 @@
 - [x] Tạo `@Entity`, viết `Repository` interface
 - [x] Hiểu **relationship mapping**: `@OneToMany`, `@ManyToOne`, `@ManyToMany`
 
-### 0.4 - Multi-threading cơ bản
-- [ ] Hiểu **Thread**, **Runnable**, **Callable** trong Java
-- [ ] Hiểu **Thread Pool**, **ExecutorService**
-- [ ] Hiểu tại sao Spring Boot mặc định là **multi-threaded** (khác với Node.js single-threaded)
-- [ ] Hiểu `@Async`, cách Spring xử lý request đồng thời
-- [ ] Hiểu **thread-safety**, **race condition**, **synchronized**
+### 0.4 - Multi-threading cơ bản ✅
+- [x] Hiểu **Thread**, **Runnable**, **Callable** trong Java
+- [x] Hiểu **Thread Pool**, **ExecutorService**
+- [x] Hiểu tại sao Spring Boot mặc định là **multi-threaded** (khác với Node.js single-threaded)
+- [x] Hiểu `@Async`, cách Spring xử lý request đồng thời
+- [x] Hiểu **thread-safety**, **race condition**, **synchronized**
 
 ---
 
-## Giai đoạn 1: Khởi tạo dự án E-commerce (1 tuần)
+## Giai đoạn 1: Khởi tạo dự án E-commerce (1 tuần) ✅
 
-- [ ] Khởi tạo project Spring Boot (Web, JPA, Security, Validation, MySQL Driver)
-- [ ] Thiết kế **database schema** (ERD) cho E-commerce
-- [ ] Cấu hình kết nối database, Hibernate DDL auto
-- [ ] Tạo cấu trúc package: `controller`, `service`, `repository`, `entity`, `dto`, `config`, `exception`
-- [ ] Cấu hình **global exception handling** (`@ControllerAdvice`)
-- [ ] Cấu hình **API response format** chuẩn (BaseResponse)
+- [x] Khởi tạo project Spring Boot (Web, JPA, Security, Validation, MySQL Driver)
+- [x] Thiết kế **database schema** (ERD) cho E-commerce
+- [x] Cấu hình kết nối database, Hibernate DDL auto
+- [x] Tạo cấu trúc package: `controller`, `service`, `repository`, `entity`, `dto`, `config`, `exception`
+- [x] Cấu hình **global exception handling** (`@ControllerAdvice`)
+- [x] Cấu hình **API response format** chuẩn (BaseResponse)
 
 ---
 
