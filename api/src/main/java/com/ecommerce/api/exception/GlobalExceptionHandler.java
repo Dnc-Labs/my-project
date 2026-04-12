@@ -41,6 +41,16 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(InvalidUserOrPassword.class)
+    public ResponseEntity<BaseResponse> handleInvalidUserOrPassword(InvalidUserOrPassword e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidToken.class)
+    public ResponseEntity<BaseResponse> handleInvalidToken(InvalidToken e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.error(e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse> handleException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.error("Internal Server Error"));

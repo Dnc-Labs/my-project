@@ -40,9 +40,9 @@ public class UserController {
      * - Trả về BaseResponse.success()
      */
     @GetMapping("/{id}")
-    public BaseResponse<UserResponse> getUser() {
-        // TODO: triển khai
-        return null;
+    public BaseResponse<UserResponse> getUser(@PathVariable Long id) {
+        UserResponse userResponse = this.userService.getUserById(id);
+        return BaseResponse.success(userResponse, "Get Success");
     }
 
     /**
@@ -52,8 +52,8 @@ public class UserController {
      * - Trả về BaseResponse.success()
      */
     @PutMapping("/{id}")
-    public BaseResponse<UserResponse> updateUser() {
-        // TODO: triển khai
-        return null;
+    public BaseResponse<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        UserResponse userResponse = this.userService.updateUser(id, updateUserRequest);
+        return BaseResponse.success(userResponse, "Updated Success");
     }
 }

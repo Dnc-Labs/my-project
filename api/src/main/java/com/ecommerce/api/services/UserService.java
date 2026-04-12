@@ -4,6 +4,7 @@ import com.ecommerce.api.dto.request.CreateUserRequest;
 import com.ecommerce.api.dto.request.UpdateUserRequest;
 import com.ecommerce.api.dto.response.UserResponse;
 import com.ecommerce.api.entity.User;
+import com.ecommerce.api.exception.ResourceNotFoundException;
 import com.ecommerce.api.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,8 +53,8 @@ public class UserService {
      * 2. Trả về UserResponse
      */
     public UserResponse getUserById(Long id) {
-        // TODO: triển khai
-        return null;
+        User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return UserResponse.fromEntity(user);
     }
 
     /**
@@ -65,7 +66,15 @@ public class UserService {
      * 5. Trả về UserResponse
      */
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
-        // TODO: triển khai
-        return null;
+        User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (request.getFullName() != null && !request.getFullName().isBlank())
+            user.setFullName(request.getFullName());
+        if (request.getAddress() != null && !request.getAddress().isBlank())
+            user.setAddress(request.getAddress());
+        if (request.getPhone() != null && !request.getPhone().isBlank())
+            user.setPhone(request.getPhone());
+        user.setUpdatedAt(LocalDateTime.now());
+        User userUpdate = this.userRepository.save(user);
+        return UserResponse.fromEntity(userUpdate);
     }
 }

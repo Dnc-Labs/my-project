@@ -15,3 +15,7 @@ app:
   name: my-app
   version: "1.0"
   description: "This is learning app"
+jwt:
+  secret: my-super-secret-key-for-jwt-must-be-at-least-256-bits-long-for-hs256
+  access-token-expiration: 900000    # 15 phút (milliseconds)
+  refresh-token-expiration: 604800000 # 7 ngày (milliseconds)
