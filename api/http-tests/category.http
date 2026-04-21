@@ -1,0 +1,316 @@
+### ======================================================
+### Category API Tests
+### ======================================================
+### Cách dùng:
+### - Mở file này trong IntelliJ IDEA → click nút "Run" (▶️) bên cạnh mỗi request
+### - Hoặc dùng VS Code với extension "REST Client"
+###
+### ⚠️ LƯU Ý:
+### - Các API CREATE/UPDATE/DELETE yêu cầu role ADMIN
+### - Đăng ký user qua API → default role là CUSTOMER
+### - Phải UPDATE trực tiếp trong DB để đổi role thành ADMIN:
+###     UPDATE users SET role = 'ADMIN' WHERE email = 'admin@test.com';
+### ======================================================
+
+@baseUrl = http://localhost:8081
+@contentType = application/json
+
+###
+### ======================================================
+### BƯỚC 1: Setup — Đăng ký user admin
+### ======================================================
+
+### [1.1] Đăng ký admin user (sau đó phải update role trong DB)
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@test.com",
+  "password": "123456",
+  "fullName": "Admin User",
+  "phone": "0900000001",
+  "address": "Hà Nội"
+}
+
+### [1.2] Đăng ký customer user (để test case 403 forbidden)
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+
+{
+  "email": "customer@test.com",
+  "password": "123456",
+  "fullName": "Customer User",
+  "phone": "0900000002",
+  "address": "Hồ Chí Minh"
+}
+
+###
+### ======================================================
+### BƯỚC 2: Login — lấy access token
+### ======================================================
+
+### [2.1] Login admin → copy accessToken vào biến @adminToken bên dưới
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("adminToken", response.body.data.accessToken);
+%}
+
+### [2.2] Login customer → lưu token để test 403
+# @name loginCustomer
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "customer@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("customerToken", response.body.data.accessToken);
+%}
+
+###
+### ======================================================
+### BƯỚC 3: Test API Category — CREATE
+### ======================================================
+
+### [3.1] Tạo root category "Thời trang"
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Thời trang",
+  "slug": "thoi-trang",
+  "description": "Danh mục thời trang tổng hợp"
+}
+
+### [3.2] Tạo root category "Điện tử"
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Điện tử",
+  "slug": "dien-tu",
+  "description": "Đồ điện tử, công nghệ"
+}
+
+### [3.3] Tạo sub category "Thời trang nam" (parent = id category 1)
+### ⚠️ Đổi parentId=1 thành id thực tế sau khi tạo category ở [3.1]
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Thời trang nam",
+  "slug": "thoi-trang-nam",
+  "description": "Quần áo nam",
+  "parentId": 1
+}
+
+### [3.4] Tạo sub-sub category "Áo nam" (parent = thoi-trang-nam)
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Áo nam",
+  "slug": "ao-nam",
+  "description": "Áo sơ mi, áo thun nam",
+  "parentId": 3
+}
+
+###
+### ======================================================
+### BƯỚC 3b: Test case lỗi — CREATE
+### ======================================================
+
+### [3.5] ❌ Tạo với slug đã tồn tại → expect error
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Thời trang trùng slug",
+  "slug": "thoi-trang"
+}
+
+### [3.6] ❌ Tạo với parentId không tồn tại → expect ResourceNotFoundException
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Category lạ",
+  "slug": "category-la",
+  "parentId": 99999
+}
+
+### [3.7] ❌ Tạo thiếu name → expect 400 validation error
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "slug": "no-name"
+}
+
+### [3.8] ❌ Customer gọi create → expect 403 Forbidden
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{customerToken}}
+
+{
+  "name": "Hacker Category",
+  "slug": "hacker"
+}
+
+### [3.9] ❌ Không có token → expect 401 Unauthorized
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "Anonymous Category",
+  "slug": "anonymous"
+}
+
+###
+### ======================================================
+### BƯỚC 4: Test API Category — GET
+### ======================================================
+
+### [4.1] Lấy tất cả category dạng tree (public)
+GET {{baseUrl}}/api/categories
+
+### [4.2] Lấy chi tiết category theo id (public)
+GET {{baseUrl}}/api/categories/1
+
+### [4.3] ❌ Lấy category không tồn tại → expect ResourceNotFoundException
+GET {{baseUrl}}/api/categories/99999
+
+###
+### ======================================================
+### BƯỚC 5: Test API Category — UPDATE
+### ======================================================
+
+### [5.1] Update name + description của category 1
+PUT {{baseUrl}}/api/categories/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Thời trang (đã sửa)",
+  "description": "Mô tả mới"
+}
+
+### [5.2] Update status INACTIVE
+PUT {{baseUrl}}/api/categories/2
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "INACTIVE"
+}
+
+### [5.3] Update slug sang slug mới chưa tồn tại
+PUT {{baseUrl}}/api/categories/4
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "slug": "ao-nam-v2"
+}
+
+### [5.4] Update slug giống slug hiện tại → OK (không báo trùng)
+PUT {{baseUrl}}/api/categories/4
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "slug": "ao-nam-v2"
+}
+
+### [5.5] ❌ Update slug sang slug đã tồn tại của category khác → expect error
+PUT {{baseUrl}}/api/categories/4
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "slug": "dien-tu"
+}
+
+### [5.6] ❌ Set parent = chính nó → expect error
+PUT {{baseUrl}}/api/categories/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "parentId": 1
+}
+
+### [5.7] ❌ Set parent là direct child → expect circular error
+### Category 1 (Thời trang) có child là Category 3 (Thời trang nam)
+### Set parent của 1 = 3 → phải báo lỗi
+PUT {{baseUrl}}/api/categories/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "parentId": 3
+}
+
+### [5.8] ❌ Customer update → expect 403
+PUT {{baseUrl}}/api/categories/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{customerToken}}
+
+{
+  "name": "Hack"
+}
+
+###
+### ======================================================
+### BƯỚC 6: Test API Category — DELETE
+### ======================================================
+
+### [6.1] ❌ Xoá category còn children → expect error
+### Category 1 (Thời trang) có children (Thời trang nam) → không được xoá
+DELETE {{baseUrl}}/api/categories/1
+Authorization: Bearer {{adminToken}}
+
+### [6.2] Xoá category lá (không có children) — xoá "Áo nam" (id=4)
+DELETE {{baseUrl}}/api/categories/4
+Authorization: Bearer {{adminToken}}
+
+### [6.3] Sau khi xoá "Áo nam" → giờ "Thời trang nam" là lá → xoá được
+DELETE {{baseUrl}}/api/categories/3
+Authorization: Bearer {{adminToken}}
+
+### [6.4] Tiếp tục xoá "Thời trang" (giờ đã không còn children)
+DELETE {{baseUrl}}/api/categories/1
+Authorization: Bearer {{adminToken}}
+
+### [6.5] ❌ Xoá category không tồn tại → expect ResourceNotFoundException
+DELETE {{baseUrl}}/api/categories/99999
+Authorization: Bearer {{adminToken}}
+
+### [6.6] ❌ Customer xoá → expect 403
+DELETE {{baseUrl}}/api/categories/2
+Authorization: Bearer {{customerToken}}
+
+###
+### ======================================================
+### BƯỚC 7: Verify cuối cùng
+### ======================================================
+
+### [7.1] Lấy lại tất cả → chỉ còn "Điện tử"
+GET {{baseUrl}}/api/categories

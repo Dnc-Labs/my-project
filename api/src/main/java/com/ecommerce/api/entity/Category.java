@@ -1,5 +1,6 @@
 package com.ecommerce.api.entity;
 
+import com.ecommerce.api.enums.CategoryStatus;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -11,37 +12,26 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    public List<Category> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<Category> children) {
-        this.children = children;
-    }
-
-    public Category getParent() {
-        return parent;
-    }
-
-    public void setParent(Category parent) {
-        this.parent = parent;
-    }
-
+    @Column(nullable = false)
     private String name;
+
+    @Column(unique = true, nullable = false)
+    private String slug;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // TODO: Thêm relationship cho nested category (danh mục cha/con):
-    // - parent: nhiều Category con thuộc 1 Category cha (@ManyToOne, optional)
-    // - children: 1 Category cha có nhiều Category con (@OneToMany)
-
-    @OneToMany(mappedBy = "parent")
-    private List<Category> children;
+    @Enumerated(EnumType.STRING)
+    private CategoryStatus status = CategoryStatus.ACTIVE;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
+
+    @OneToMany(mappedBy = "parent")
+    private List<Category> children;
+
+    // TODO: Triển khai getter/setter cho tất cả field
 
     public Long getId() {
         return id;
@@ -59,6 +49,14 @@ public class Category {
         this.name = name;
     }
 
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -67,4 +65,27 @@ public class Category {
         this.description = description;
     }
 
+    public CategoryStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CategoryStatus status) {
+        this.status = status;
+    }
+
+    public Category getParent() {
+        return parent;
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
+    }
+
+    public List<Category> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<Category> children) {
+        this.children = children;
+    }
 }

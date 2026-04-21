@@ -42,17 +42,17 @@
 
 ## Giai đoạn 2: Quản lý người dùng & Xác thực (2 tuần)
 
-### 2.1 - User Entity & CRUD
-- [ ] Tạo `User` entity (id, email, password, fullName, phone, role, status, address...)
-- [ ] Tạo `UserRepository`, `UserService`, `UserController`
-- [ ] API: đăng ký, xem profile, cập nhật profile
+### 2.1 - User Entity & CRUD ✅
+- [x] Tạo `User` entity (id, email, password, fullName, phone, role, status, address...)
+- [x] Tạo `UserRepository`, `UserService`, `UserController`
+- [x] API: đăng ký, xem profile, cập nhật profile
 
-### 2.2 - Authentication & Authorization
-- [ ] Hiểu **Spring Security** filter chain
-- [ ] Tích hợp **JWT** (access token + refresh token)
-- [ ] API: đăng nhập, đăng xuất, refresh token
-- [ ] Phân quyền: `ADMIN`, `SELLER`, `CUSTOMER` bằng `@PreAuthorize`
-- [ ] Mã hóa password bằng **BCrypt**
+### 2.2 - Authentication & Authorization ✅
+- [x] Hiểu **Spring Security** filter chain
+- [x] Tích hợp **JWT** (access token + refresh token)
+- [x] API: đăng nhập, đăng xuất, refresh token
+- [x] Phân quyền: `ADMIN`, `SELLER`, `CUSTOMER` bằng `@PreAuthorize`
+- [x] Mã hóa password bằng **BCrypt**
 
 ---
 
