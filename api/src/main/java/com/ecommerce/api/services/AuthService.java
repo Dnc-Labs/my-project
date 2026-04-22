@@ -25,9 +25,10 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest loginRequest){
         String userEmail = loginRequest.getEmail();
-        User user = this.userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User is not found"));
+        User user = this.userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new InvalidUserOrPassword("Invalid email or password"));
         boolean checkValidPassword = this.passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
-        if(!checkValidPassword) throw new InvalidUserOrPassword("Username or password is incorrect");
+        if(!checkValidPassword) throw new InvalidUserOrPassword("Invalid email or password");
 
         String accessToken = this.jwtTokenProvider.generateAccessToken(loginRequest.getEmail(), user.getRole().toString());
         String refreshToken = this.jwtTokenProvider.generateRefreshToken(loginRequest.getEmail());
@@ -38,7 +39,7 @@ public class AuthService {
         boolean validToken = this.jwtTokenProvider.validateToken(refreshToken);
         if(!validToken) throw new InvalidToken();
         String email = this.jwtTokenProvider.getEmailFromToken(refreshToken);
-        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User is not found"));
+        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         String accessToken = this.jwtTokenProvider.generateAccessToken(email, user.getRole().toString());
         return new AuthResponse(accessToken, refreshToken);
     }

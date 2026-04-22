@@ -52,8 +52,8 @@ public class SecurityConfig {
                         // Cho phép truy cập không cần token
                         .requestMatchers("/api/auth/**").permitAll()     // login, register
                         .requestMatchers("/api/users").permitAll()       // tạm thời cho register
-                        // Tất cả request còn lại đều cần authentication
-                        .anyRequest().authenticated()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated() // Tất cả request còn lại đều cần authentication
                 )
 
                 // 4. Thêm JWT filter VÀO TRƯỚC UsernamePasswordAuthenticationFilter

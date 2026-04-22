@@ -14,6 +14,7 @@ import jakarta.validation.constraints.*;
  * TODO: Tạo getter/setter cho tất cả field
  */
 public class UpdateUserRequest {
+    @NotBlank
     private String fullName;
 
     private String phone;
@@ -28,7 +29,7 @@ public class UpdateUserRequest {
     }
 
     public String getPhone() {
-        return Phone;
+        return phone;
     }
 
     public void setPhone(String phone) {

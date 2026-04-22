@@ -3,9 +3,10 @@ package com.ecommerce.api.exception;
 import com.ecommerce.api.dto.response.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
@@ -21,18 +22,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // TODO: Xử lý ResourceNotFoundException → trả 404
-    // - Bắt ResourceNotFoundException
-    // - Trả về BaseResponse với success=false, message từ exception, data=null
-    // - HTTP status: 404
-
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<BaseResponse> handleResourceNotFoundException(ResourceNotFoundException e) {
+    public ResponseEntity<BaseResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BaseResponse.error(e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<BaseResponse> handleValidation(MethodArgumentNotValidException e) {
+    public ResponseEntity<BaseResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
@@ -40,23 +36,24 @@ public class GlobalExceptionHandler {
                 .body(BaseResponse.error(message));
     }
 
-
     @ExceptionHandler(InvalidUserOrPassword.class)
-    public ResponseEntity<BaseResponse> handleInvalidUserOrPassword(InvalidUserOrPassword e) {
+    public ResponseEntity<BaseResponse<Void>> handleInvalidUserOrPassword(InvalidUserOrPassword e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.error(e.getMessage()));
     }
 
     @ExceptionHandler(InvalidToken.class)
-    public ResponseEntity<BaseResponse> handleInvalidToken(InvalidToken e) {
+    public ResponseEntity<BaseResponse<Void>> handleInvalidToken(InvalidToken e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.error(e.getMessage()));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<BaseResponse> handleException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.error("Internal Server Error"));
-
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<BaseResponse<Void>> handleAccessDenied(Exception e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(BaseResponse.error("You do not have permission to perform this action"));
     }
 
-
-
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<BaseResponse<Void>> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.error(e.getMessage()));
+    }
 }

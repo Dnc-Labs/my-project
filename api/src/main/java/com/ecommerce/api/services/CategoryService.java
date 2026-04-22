@@ -30,10 +30,10 @@ public class CategoryService {
      */
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         boolean checkExistsSlug = this.categoryRepository.existsBySlug(request.getSlug());
-        if(checkExistsSlug) throw new RuntimeException("This Slug has existed");
+        if(checkExistsSlug) throw new RuntimeException("Slug already exists");
         Category existParent = null;
         if(request.getParentId() != null) {
-            existParent = this.categoryRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Parent not exits"));
+            existParent = this.categoryRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
         }
 
         Category category = new Category();
@@ -82,17 +82,17 @@ public class CategoryService {
         String slugUpdate = request.getSlug();
         if(CheckData.checkIsNotNull(slugUpdate) && !slugUpdate.equals(category.getSlug())) {
             boolean checkExistedBySlug = this.categoryRepository.existsBySlug(slugUpdate);
-            if(checkExistedBySlug) throw new RuntimeException("The slug updated has already existed");
+            if(checkExistedBySlug) throw new RuntimeException("Slug already exists");
             category.setSlug(slugUpdate);
         }
         Long parentId = request.getParentId();
 
         if(CheckData.checkIsNotNull(parentId)) {
             Category parentCategory = this.categoryRepository.findById(parentId).orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
-            if(parentCategory.getId().equals(category.getId())) throw new RuntimeException("Can't set category as a parent");
+            if(parentCategory.getId().equals(category.getId())) throw new RuntimeException("Cannot set category as its own parent");
             if (CheckData.checkIsNotNull(category.getChildren())) {
                 boolean check = category.getChildren().stream().anyMatch(c -> c.getId().equals(parentId));
-                if (check) throw new RuntimeException("Can't set category as a parent");
+                if (check) throw new RuntimeException("Cannot set a descendant as parent (circular reference)");
             }
             category.setParent(parentCategory);
         }
@@ -120,8 +120,8 @@ public class CategoryService {
      * 3. Xoá category
      */
     public void deleteCategory(Long id) {
-        Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("category not found"));
-        if(CheckData.checkIsNotNull(category.getChildren())) throw new RuntimeException("You can't delete this parent category");
+        Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        if(CheckData.checkIsNotNull(category.getChildren())) throw new RuntimeException("Cannot delete category that has children");
         this.categoryRepository.deleteById(id);
     }
 }

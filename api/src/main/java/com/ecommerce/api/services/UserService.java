@@ -33,7 +33,7 @@ public class UserService {
      */
     public UserResponse createUser(CreateUserRequest request) {
         Optional<User> existUser = userRepository.findByEmail(request.getEmail());
-        if(existUser.isPresent()) throw new RuntimeException("Email has already registered");
+        if(existUser.isPresent()) throw new RuntimeException("Email is already registered");
         String passwordHash = this.passwordEncoder.encode(request.getPassword());
 
         User user = new User();
