@@ -9,6 +9,7 @@ import com.ecommerce.api.repository.CategoryRepository;
 import com.ecommerce.api.utilities.CheckData;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -20,14 +21,6 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
-    /**
-     * TODO: Tạo category mới
-     * 1. Kiểm tra slug đã tồn tại chưa → nếu rồi thì throw exception
-     * 2. Nếu có parentId → tìm parent category, nếu không tìm thấy thì throw ResourceNotFoundException
-     * 3. Tạo Category entity từ request, set parent nếu có
-     * 4. Lưu vào database
-     * 5. Trả về CategoryResponse
-     */
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         boolean checkExistsSlug = this.categoryRepository.existsBySlug(request.getSlug());
         if(checkExistsSlug) throw new RuntimeException("Slug already exists");
@@ -47,36 +40,16 @@ public class CategoryService {
         return CategoryResponse.fromEntity(created);
     }
 
-    /**
-     * TODO: Lấy tất cả category dạng tree
-     * 1. Tìm tất cả category gốc (parent == null)
-     * 2. Convert sang List<CategoryResponse> (fromEntity sẽ tự đệ quy lấy children)
-     * 3. Trả về list
-     */
     public List<CategoryResponse> getAllCategories() {
         List<Category> categories = this.categoryRepository.findByParentIsNull();
         return categories.stream().map(CategoryResponse::fromEntity).toList();
     }
 
-    /**
-     * TODO: Lấy chi tiết 1 category theo id
-     * 1. Tìm category theo id → nếu không có thì throw ResourceNotFoundException
-     * 2. Trả về CategoryResponse
-     */
     public CategoryResponse getCategoryById(Long id) {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         return CategoryResponse.fromEntity(category);
     }
 
-    /**
-     * TODO: Cập nhật category
-     * 1. Tìm category theo id → nếu không có thì throw ResourceNotFoundException
-     * 2. Nếu đổi slug → kiểm tra slug mới đã tồn tại chưa
-     * 3. Nếu đổi parentId → tìm parent mới, kiểm tra không cho phép set parent = chính nó
-     * 4. Cập nhật các field từ request (chỉ update field nào không null)
-     * 5. Lưu vào database
-     * 6. Trả về CategoryResponse
-     */
     public CategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         String slugUpdate = request.getSlug();
@@ -113,11 +86,8 @@ public class CategoryService {
     }
 
     /**
-     * TODO: Xoá category
-     * 1. Tìm category theo id → nếu không có thì throw ResourceNotFoundException
-     * 2. Kiểm tra xem category có children không → nếu có thì CHẶN, throw exception
-     *    (Lý do: tránh xoá nhầm cả cây danh mục, admin phải xoá con trước)
-     * 3. Xoá category
+     * Xoá category: chặn nếu còn children (admin phải xoá con trước để
+     * tránh xoá nhầm cả cây danh mục).
      */
     public void deleteCategory(Long id) {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));

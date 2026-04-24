@@ -23,14 +23,6 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    /**
-     * TODO: API tạo category (chỉ ADMIN)
-     * - POST /api/categories
-     * - Nhận @Valid @RequestBody CreateCategoryRequest
-     * - Trả về ResponseEntity 201 + BaseResponse.success()
-     * - Phân quyền: @PreAuthorize("hasRole('ADMIN')")
-     */
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest request) {
@@ -38,38 +30,17 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(categoryResponse));
     }
 
-    /**
-     * TODO: API lấy tất cả category (dạng tree)
-     * - GET /api/categories
-     * - Ai cũng xem được (không cần phân quyền)
-     * - Trả về BaseResponse<List<CategoryResponse>>
-     */
-
     @GetMapping
     public ResponseEntity<BaseResponse<List<CategoryResponse>>> getAll() {
         List<CategoryResponse> categoryResponses = this.categoryService.getAllCategories();
         return ResponseEntity.ok(BaseResponse.success(categoryResponses));
     }
-    /**
-     * TODO: API lấy chi tiết 1 category
-     * - GET /api/categories/{id}
-     * - Ai cũng xem được
-     * - Trả về BaseResponse<CategoryResponse>
-     */
 
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<CategoryResponse>> getById(@PathVariable Long id){
         CategoryResponse categoryResponse = this.categoryService.getCategoryById(id);
         return ResponseEntity.ok(BaseResponse.success(categoryResponse));
     }
-
-    /**
-     * TODO: API cập nhật category (chỉ ADMIN)
-     * - PUT /api/categories/{id}
-     * - Nhận @Valid @RequestBody UpdateCategoryRequest
-     * - Trả về BaseResponse<CategoryResponse>
-     * - Phân quyền: @PreAuthorize("hasRole('ADMIN')")
-     */
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -78,14 +49,6 @@ public class CategoryController {
         return ResponseEntity.ok(BaseResponse.success(categoryResponse));
     }
 
-
-
-    /**
-     * TODO: API xoá category (chỉ ADMIN)
-     * - DELETE /api/categories/{id}
-     * - Trả về BaseResponse (không có data, chỉ message)
-     * - Phân quyền: @PreAuthorize("hasRole('ADMIN')")
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<?>> deleteById(@PathVariable Long id) {

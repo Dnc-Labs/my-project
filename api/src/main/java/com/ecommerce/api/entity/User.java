@@ -16,17 +16,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO: Thêm các field sau:
-    // - email (String, unique, not null)
-    // - password (String, not null)
-    // - fullName (String, not null)
-    // - phone (String)
-    // - role (String — mặc định "CUSTOMER", có thể là "ADMIN", "SELLER")
-    // - status (String — mặc định "ACTIVE", có thể là "INACTIVE", "BANNED")
-    // - address (String, TEXT)
-    // - createdAt (LocalDateTime)
-    // - updatedAt (LocalDateTime)
-
     @Column(unique = true, nullable = false)
     private String email;
 

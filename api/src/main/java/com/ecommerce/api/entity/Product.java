@@ -14,20 +14,24 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(unique = true, nullable = false)
+    private String slug;
+
+    @Column(unique = true, nullable = false)
+    private String sku;
+
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // - stock (Integer — tồn kho tổng, mặc định 0)
-    // - status (String — "ACTIVE", "INACTIVE", mặc định "ACTIVE")
-    // - imageUrl (String)
-    // - createdAt (LocalDateTime)
-    // - updatedAt (LocalDateTime)
+    @Column(nullable = false)
+    private Integer stock = 0;
 
-    private Integer stock;
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.ACTIVE;
 
@@ -36,15 +40,40 @@ public class Product {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // - category: đã có @ManyToOne, giữ nguyên
-    // - variants: 1 Product có nhiều ProductVariant (@OneToMany)
-
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @ManyToOne
+    @JoinColumn(name = "seller_id", nullable = false)
+    private User seller;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductVariant> productVariants;
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public User getSeller() {
+        return seller;
+    }
+
+    public void setSeller(User seller) {
+        this.seller = seller;
+    }
 
     public Long getId() {
         return id;

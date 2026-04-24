@@ -23,14 +23,6 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /**
-     * TODO: Triển khai tạo user
-     * 1. Kiểm tra email đã tồn tại chưa → nếu rồi thì throw exception
-     * 2. Tạo User entity từ request
-     * 3. Set createdAt = LocalDateTime.now()
-     * 4. Lưu vào database
-     * 5. Trả về UserResponse
-     */
     public UserResponse createUser(CreateUserRequest request) {
         Optional<User> existUser = userRepository.findByEmail(request.getEmail());
         if(existUser.isPresent()) throw new RuntimeException("Email is already registered");
@@ -47,24 +39,11 @@ public class UserService {
         return UserResponse.fromEntity(createdUser);
     }
 
-    /**
-     * TODO: Triển khai lấy user theo id
-     * 1. Tìm user theo id → nếu không có thì throw ResourceNotFoundException
-     * 2. Trả về UserResponse
-     */
     public UserResponse getUserById(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return UserResponse.fromEntity(user);
     }
 
-    /**
-     * TODO: Triển khai cập nhật user
-     * 1. Tìm user theo id → nếu không có thì throw ResourceNotFoundException
-     * 2. Cập nhật các field từ request
-     * 3. Set updatedAt = LocalDateTime.now()
-     * 4. Lưu vào database
-     * 5. Trả về UserResponse
-     */
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (request.getFullName() != null && !request.getFullName().isBlank())

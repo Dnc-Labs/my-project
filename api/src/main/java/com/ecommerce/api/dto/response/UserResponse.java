@@ -8,20 +8,6 @@ import jakarta.validation.constraints.Size;
 
 /**
  * DTO trả về cho client — KHÔNG chứa password.
- *
- * TODO: Thêm các field:
- * - id (Long)
- * - email (String)
- * - fullName (String)
- * - phone (String)
- * - role (String)
- * - status (String)
- * - address (String)
- *
- * TODO: Tạo getter/setter cho tất cả field
- *
- * TODO: Tạo static method để convert từ Entity sang DTO:
- *   public static UserResponse fromEntity(User user) { ... }
  */
 public class UserResponse {
     private Long id;

@@ -8,23 +8,7 @@ import java.util.List;
 
 /**
  * DTO trả về cho client — dạng tree (có chứa children).
- *
- * TODO: Thêm các field:
- * - id (Long)
- * - name (String)
- * - slug (String)
- * - description (String)
- * - status (CategoryStatus)
- * - children (List<CategoryResponse>) — danh sách category con (recursive)
- *
- * TODO: Tạo constructor, getter/setter
- *
- * TODO: Tạo static method convert từ Entity sang DTO (dạng tree):
- *   public static CategoryResponse fromEntity(Category category) { ... }
- *
- * Gợi ý: Trong fromEntity, cần convert cả children bằng cách
- *   gọi đệ quy fromEntity cho từng child.
- *   Nếu children == null hoặc rỗng → set children = empty list
+ * fromEntity gọi đệ quy để build tree.
  */
 public class CategoryResponse {
     private Long id;

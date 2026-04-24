@@ -31,8 +31,6 @@ public class Category {
     @OneToMany(mappedBy = "parent")
     private List<Category> children;
 
-    // TODO: Triển khai getter/setter cho tất cả field
-
     public Long getId() {
         return id;
     }

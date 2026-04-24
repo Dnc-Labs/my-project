@@ -20,12 +20,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    /**
-     * TODO: Triển khai API đăng ký user
-     * - Nhận @Valid @RequestBody CreateUserRequest
-     * - Gọi userService.createUser()
-     * - Trả về ResponseEntity với status 201 (CREATED) + BaseResponse.success()
-     */
     @PostMapping
     public ResponseEntity<BaseResponse<UserResponse>> createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
         UserResponse userResponse = this.userService.createUser(createUserRequest);
@@ -33,24 +27,12 @@ public class UserController {
                 .body(BaseResponse.success(userResponse, "Create Successful"));
     }
 
-    /**
-     * TODO: Triển khai API xem profile
-     * - Nhận @PathVariable Long id
-     * - Gọi userService.getUserById()
-     * - Trả về BaseResponse.success()
-     */
     @GetMapping("/{id}")
     public BaseResponse<UserResponse> getUser(@PathVariable Long id) {
         UserResponse userResponse = this.userService.getUserById(id);
         return BaseResponse.success(userResponse, "Get Success");
     }
 
-    /**
-     * TODO: Triển khai API cập nhật profile
-     * - Nhận @PathVariable Long id + @Valid @RequestBody UpdateUserRequest
-     * - Gọi userService.updateUser()
-     * - Trả về BaseResponse.success()
-     */
     @PutMapping("/{id}")
     public BaseResponse<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest updateUserRequest) {
         UserResponse userResponse = this.userService.updateUser(id, updateUserRequest);
