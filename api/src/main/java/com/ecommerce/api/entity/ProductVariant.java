@@ -3,28 +3,69 @@ package com.ecommerce.api.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
+/**
+ * ProductVariant — biến thể của Product (kết hợp size + color).
+ * Composite unique constraint (product_id, size, color) đảm bảo trong 1 product
+ * không có 2 variant trùng nhau về size + color.
+ */
 @Entity
-@Table(name = "product_variants")
+@Table(
+    name = "product_variants",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_variant_product_size_color",
+        columnNames = {"product_id", "size", "color"}
+    )
+)
 public class ProductVariant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // - name (String — ví dụ: "Đỏ - Size M", "Xanh - Size L")
-    // - sku (String, unique — mã định danh variant)
-    // - price (BigDecimal — giá riêng của variant, có thể khác giá gốc Product)
-    // - stock (Integer — tồn kho của variant này)
-    private String name;
-    @Column(unique = true)
-    private String sku;
-    private BigDecimal price;
-    private Integer stock;
+    @Column(nullable = false)
+    private String size;
 
-    // - product: nhiều Variant thuộc 1 Product (@ManyToOne)
+    @Column(nullable = false)
+    private String color;
+
+    @Column(unique = true, nullable = false)
+    private String sku;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price;
+
+    @Column(nullable = false)
+    private Integer stock = 0;
+
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     public Long getId() {
         return id;
@@ -32,14 +73,6 @@ public class ProductVariant {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getSku() {

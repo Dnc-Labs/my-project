@@ -48,7 +48,7 @@ public class Product {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> productVariants;
 
     public String getSlug() {

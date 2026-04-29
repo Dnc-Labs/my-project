@@ -52,6 +52,11 @@ public class GlobalExceptionHandler {
                 .body(BaseResponse.error("You do not have permission to perform this action"));
     }
 
+    @ExceptionHandler(DuplicateResource.class)
+    public ResponseEntity<BaseResponse<Void>> handleDuplicateResource(DuplicateResource e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(BaseResponse.error(e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.error("Internal Server Error"));
