@@ -26,106 +26,86 @@ public class ProductVariantService {
         this.productRepository = productRepository;
     }
 
-    /**
-     * TODO: Tạo variant cho 1 product
-     * 1. Tìm product theo productId → throw ResourceNotFoundException nếu không có
-     * 2. Check sku đã tồn tại chưa → throw exception
-     * 3. Check trùng (product_id + size + color) → throw exception
-     *    (DB cũng có unique constraint nhưng check trước để trả lỗi rõ ràng hơn,
-     *     thay vì để DB throw SQLIntegrityConstraintViolation)
-     * 4. Tạo ProductVariant entity, set product
-     * 5. Lưu, trả về ProductVariantResponse
-     */
     public ProductVariantResponse createVariant(Long productId, CreateProductVariantRequest request) {
-        Product product = this.productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        boolean checkExitsBySku = this.variantRepository.existsBySku(request.getSku());
-        if(checkExitsBySku) throw new DuplicateResource("SKU already exists");
-        boolean checkVariantDuplicate = this.variantRepository.existsByProductIdAndSizeAndColor(productId, request.getSize(), request.getColor());
-        if(checkVariantDuplicate) throw new DuplicateResource("Variant already exists");
+        if (variantRepository.existsBySku(request.getSku())) {
+            throw new DuplicateResource("SKU already exists");
+        }
+        if (variantRepository.existsByProductIdAndSizeAndColor(productId, request.getSize(), request.getColor())) {
+            throw new DuplicateResource("Variant already exists");
+        }
 
-        ProductVariant productVariant = new ProductVariant();
-        productVariant.setColor(request.getColor());
-        productVariant.setSize(request.getSize());
-        productVariant.setSku(request.getSku());
-        productVariant.setImageUrl(request.getImageUrl());
-        productVariant.setPrice(request.getPrice());
-        productVariant.setStock(request.getStock());
-        productVariant.setProduct(product);
-        ProductVariant newProductVariant =  this.variantRepository.save(productVariant);
-        return ProductVariantResponse.fromEntity(newProductVariant);
+        ProductVariant variant = new ProductVariant();
+        variant.setSize(request.getSize());
+        variant.setColor(request.getColor());
+        variant.setSku(request.getSku());
+        variant.setImageUrl(request.getImageUrl());
+        variant.setPrice(request.getPrice());
+        variant.setStock(request.getStock());
+        variant.setProduct(product);
+
+        ProductVariant saved = variantRepository.save(variant);
+        return ProductVariantResponse.fromEntity(saved);
     }
 
-    /**
-     * TODO: Lấy danh sách variants của 1 product (public)
-     * 1. Check product tồn tại
-     * 2. findByProductId
-     * 3. Trả về list (rỗng → empty list, không null)
-     */
     public List<ProductVariantResponse> getVariantsByProduct(Long productId) {
         if (!productRepository.existsById(productId)) {
             throw new ResourceNotFoundException("Product not found");
         }
-        List<ProductVariant> productVariants = this.variantRepository.findByProductId(productId);
-        return productVariants.stream().map(ProductVariantResponse::fromEntity).toList();
+        List<ProductVariant> variants = variantRepository.findByProductId(productId);
+        return variants.stream().map(ProductVariantResponse::fromEntity).toList();
     }
 
-    /**
-     * TODO: Lấy chi tiết 1 variant (public)
-     */
     public ProductVariantResponse getVariantById(Long variantId) {
-        ProductVariant productVariant = this.getProductVariantById(variantId);
-        return ProductVariantResponse.fromEntity(productVariant);
+        ProductVariant variant = findVariantOrThrow(variantId);
+        return ProductVariantResponse.fromEntity(variant);
     }
 
     /**
-     * TODO: Update variant
-     * Ownership check đã ở @PreAuthorize controller, service chỉ business logic.
-     *
-     * 1. Tìm variant theo id
-     * 2. Nếu đổi sku (khác sku hiện tại) → check trùng
-     * 3. Nếu đổi size hoặc color → check composite unique
-     *    (product_id + new_size + new_color không được trùng với variant khác)
-     * 4. Update các field optional bằng CheckData.checkIsNotNull
-     * 5. Lưu, trả về response
+     * Cập nhật variant. Ownership check đã xử lý ở @PreAuthorize controller —
+     * service chỉ tập trung vào business logic.
      */
     public ProductVariantResponse updateVariant(Long variantId, UpdateProductVariantRequest request) {
-        ProductVariant productVariant = this.getProductVariantById(variantId);
+        ProductVariant variant = findVariantOrThrow(variantId);
 
-        if(CheckData.checkIsNotNull(request.getSku()) && !request.getSku().equals(productVariant.getSku())) {
-            boolean checkExistVariantBySku = this.variantRepository.existsBySku(request.getSku());
-            if(checkExistVariantBySku) throw new DuplicateResource("SKU already exists");
-            productVariant.setSku(request.getSku());
-        }
-        String size = request.getSize();
-        String color = request.getColor();
-        boolean sizeChanged = CheckData.checkIsNotNull(size) && !size.equals(productVariant.getSize());
-        boolean colorChanged = CheckData.checkIsNotNull(color) && !color.equals(productVariant.getColor());
-        if(sizeChanged || colorChanged) {
-            String sizeUpdate = !CheckData.checkIsNotNull(size) ? productVariant.getSize() : size;
-            String colorUpdate = !CheckData.checkIsNotNull(color) ? productVariant.getColor() : color;
-            boolean checkDuplicateVariant = this.variantRepository.existsByProductIdAndSizeAndColor(productVariant.getProduct().getId(), sizeUpdate, colorUpdate);
-            if(checkDuplicateVariant) throw new DuplicateResource("Variant already exists");
-            productVariant.setSize(sizeUpdate);
-            productVariant.setColor(colorUpdate);
+        String newSku = request.getSku();
+        if (CheckData.checkIsNotNull(newSku) && !newSku.equals(variant.getSku())) {
+            if (variantRepository.existsBySku(newSku)) {
+                throw new DuplicateResource("SKU already exists");
+            }
+            variant.setSku(newSku);
         }
 
-        if(CheckData.checkIsNotNull(request.getImageUrl())) productVariant.setImageUrl(request.getImageUrl());
-        if(CheckData.checkIsNotNull(request.getStock())) productVariant.setStock(request.getStock());
-        if(CheckData.checkIsNotNull(request.getPrice())) productVariant.setPrice(request.getPrice());
+        String newSize = request.getSize();
+        String newColor = request.getColor();
+        boolean sizeChanged = CheckData.checkIsNotNull(newSize) && !newSize.equals(variant.getSize());
+        boolean colorChanged = CheckData.checkIsNotNull(newColor) && !newColor.equals(variant.getColor());
+        if (sizeChanged || colorChanged) {
+            String size = sizeChanged ? newSize : variant.getSize();
+            String color = colorChanged ? newColor : variant.getColor();
+            if (variantRepository.existsByProductIdAndSizeAndColor(variant.getProduct().getId(), size, color)) {
+                throw new DuplicateResource("Variant already exists");
+            }
+            variant.setSize(size);
+            variant.setColor(color);
+        }
 
-        return ProductVariantResponse.fromEntity(this.variantRepository.save(productVariant));
+        if (CheckData.checkIsNotNull(request.getImageUrl())) variant.setImageUrl(request.getImageUrl());
+        if (CheckData.checkIsNotNull(request.getStock())) variant.setStock(request.getStock());
+        if (CheckData.checkIsNotNull(request.getPrice())) variant.setPrice(request.getPrice());
+
+        return ProductVariantResponse.fromEntity(variantRepository.save(variant));
     }
 
-    /**
-     * TODO: Xoá variant
-     */
     public void deleteVariant(Long variantId) {
-        ProductVariant productVariant = this.getProductVariantById(variantId);
-        this.variantRepository.delete(productVariant);
+        ProductVariant variant = findVariantOrThrow(variantId);
+        variantRepository.delete(variant);
     }
 
-    private ProductVariant getProductVariantById(Long variantId) {
-        return this.variantRepository.findById(variantId).orElseThrow(() -> new ResourceNotFoundException("Product Variant not found"));
+    private ProductVariant findVariantOrThrow(Long variantId) {
+        return variantRepository.findById(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product Variant not found"));
     }
 }

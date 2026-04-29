@@ -43,14 +43,11 @@ public class ProductVariantSecurity {
      * (đi qua getProduct() rồi mới đến seller).
      */
     public boolean isOwner(Long variantId, Authentication authentication) {
-        if(authentication == null || !authentication.isAuthenticated()) return false;
-        String currentUserEmail =  authentication.getName();
-        Optional<User> currentUserObject = this.userRepository.findByEmail(currentUserEmail);
-        if(currentUserObject.isEmpty()) return false;
-        User seller = currentUserObject.get();
-        Optional<ProductVariant> productVariantObject = this.productVariantRepository.findById(variantId);
-        if(productVariantObject.isEmpty()) return false;
-        ProductVariant productVariant = productVariantObject.get();
-        return seller.getId().equals(productVariant.getProduct().getSeller().getId());
+        if (authentication == null || !authentication.isAuthenticated()) return false;
+        String email = authentication.getName();
+        Optional<User> seller = this.userRepository.findByEmail(email);
+        Optional<ProductVariant> variant = this.productVariantRepository.findById(variantId);
+        if (seller.isEmpty() || variant.isEmpty()) return false;
+        return variant.get().getProduct().getSeller().getId().equals(seller.get().getId());
     }
 }
