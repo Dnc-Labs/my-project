@@ -35,8 +35,6 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.ACTIVE;
 
-    private String imageUrl;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,6 +48,11 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> productVariants;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images;
+
+    // TODO: Thêm getter/setter cho images. Bỏ getter/setter của imageUrl nếu IDE chưa tự xoá.
 
     public String getSlug() {
         return slug;
@@ -139,12 +142,12 @@ public class Product {
         this.status = status;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public List<ProductImage> getImages() {
+        return images;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
     }
 
     public LocalDateTime getCreatedAt() {

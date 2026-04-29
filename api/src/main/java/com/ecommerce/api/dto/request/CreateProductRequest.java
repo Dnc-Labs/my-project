@@ -26,8 +26,6 @@ public class CreateProductRequest {
     @PositiveOrZero
     private Integer stock = 0;
 
-    private String imageUrl;
-
     @NotNull
     private Long categoryId;
 
@@ -77,14 +75,6 @@ public class CreateProductRequest {
 
     public void setStock(Integer stock) {
         this.stock = stock;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
     }
 
     public Long getCategoryId() {

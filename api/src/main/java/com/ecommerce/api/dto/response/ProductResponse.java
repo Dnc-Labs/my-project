@@ -2,11 +2,14 @@ package com.ecommerce.api.dto.response;
 
 import com.ecommerce.api.entity.Category;
 import com.ecommerce.api.entity.Product;
+import com.ecommerce.api.entity.ProductImage;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.enums.ProductStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * DTO response cho Product.
@@ -21,13 +24,15 @@ public class ProductResponse {
     private String description;
     private Integer stock = 0;
     private ProductStatus status;
-    private String imageUrl;
     private Long categoryId;
     private String categoryName;
     private Long sellerId;
     private String sellerName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private String primaryImageUrl;          // URL ảnh isPrimary, null nếu chưa upload
+    private List<ProductImageResponse> images = Collections.emptyList();
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -112,12 +117,20 @@ public class ProductResponse {
         this.status = status;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getPrimaryImageUrl() {
+        return primaryImageUrl;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setPrimaryImageUrl(String primaryImageUrl) {
+        this.primaryImageUrl = primaryImageUrl;
+    }
+
+    public List<ProductImageResponse> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImageResponse> images) {
+        this.images = images;
     }
 
     public Long getCategoryId() {
@@ -168,9 +181,20 @@ public class ProductResponse {
         productResponse.setDescription(product.getDescription());
         productResponse.setStock(product.getStock());
         productResponse.setStatus(product.getStatus());
-        productResponse.setImageUrl(product.getImageUrl());
         productResponse.setCreatedAt(product.getCreatedAt());
         productResponse.setUpdatedAt(product.getUpdatedAt());
+
+        List<ProductImage> images = product.getImages();
+        if (images != null && !images.isEmpty()) {
+            productResponse.setImages(images.stream().map(ProductImageResponse::fromEntity).toList());
+            productResponse.setPrimaryImageUrl(
+                    images.stream()
+                            .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                            .findFirst()
+                            .map(ProductImage::getUrl)
+                            .orElse(null)
+            );
+        }
         return productResponse;
     }
 }

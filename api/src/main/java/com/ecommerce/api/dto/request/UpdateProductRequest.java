@@ -17,7 +17,6 @@ public class UpdateProductRequest {
 
     @PositiveOrZero
     private Integer stock = 0;
-    private String imageUrl;
     private ProductStatus status;
     private Long categoryId;
 
@@ -67,14 +66,6 @@ public class UpdateProductRequest {
 
     public void setStock(Integer stock) {
         this.stock = stock;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
     }
 
     public ProductStatus getStatus() {

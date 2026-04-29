@@ -68,7 +68,6 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setDescription(request.getDescription());
-        product.setImageUrl(request.getImageUrl());
         product.setCreatedAt(LocalDateTime.now());
         Product savedProduct = this.productRepository.save(product);
         return ProductResponse.fromEntity(savedProduct);
@@ -114,14 +113,12 @@ public class ProductService {
         String name = request.getName();
         String description = request.getDescription();
         Integer stock = request.getStock();
-        String imageUrl = request.getImageUrl();
         ProductStatus productStatus = request.getStatus();
 
         if(CheckData.checkIsNotNull(price)) product.setPrice(price);
         if(CheckData.checkIsNotNull(name)) product.setName(name);
         if(CheckData.checkIsNotNull(description)) product.setDescription(description);
         if(CheckData.checkIsNotNull(stock)) product.setStock(stock);
-        if(CheckData.checkIsNotNull(imageUrl)) product.setImageUrl(imageUrl);
         if(CheckData.checkIsNotNull(productStatus)) product.setStatus(productStatus);
         product.setUpdatedAt(LocalDateTime.now());
 

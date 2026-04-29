@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/variants/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()  // serve static images
                         .anyRequest().authenticated() // Tất cả request còn lại đều cần authentication
                 )
 

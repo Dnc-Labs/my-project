@@ -11,6 +11,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB        # 1 file tối đa 5MB
+      max-request-size: 25MB    # tổng request (multi-file) tối đa 25MB
 app:
   name: my-app
   version: "1.0"
@@ -19,3 +24,8 @@ jwt:
   secret: my-super-secret-key-for-jwt-must-be-at-least-256-bits-long-for-hs256
   access-token-expiration: 900000    # 15 phút (milliseconds)
   refresh-token-expiration: 604800000 # 7 ngày (milliseconds)
+storage:
+  type: local                   # 'local' | 's3' | 'cloudinary' (sau này)
+  local:
+    upload-dir: ./uploads       # folder lưu file (relative đến working dir)
+    public-url-prefix: /uploads # URL prefix khi serve file qua HTTP
