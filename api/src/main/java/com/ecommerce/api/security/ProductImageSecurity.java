@@ -1,13 +1,18 @@
 package com.ecommerce.api.security;
 
-import com.ecommerce.api.repository.ProductImageRepository;
-import com.ecommerce.api.repository.UserRepository;
+import java.util.Optional;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import com.ecommerce.api.entity.ProductImage;
+import com.ecommerce.api.entity.User;
+import com.ecommerce.api.repository.ProductImageRepository;
+import com.ecommerce.api.repository.UserRepository;
+
 /**
  * Bean check ownership của ProductImage trong @PreAuthorize.
- *
+ * <p>
  * Pattern giống ProductVariantSecurity — image ownership = ownership của Product.
  * Đi qua image.getProduct().getSeller().
  */
@@ -23,15 +28,15 @@ public class ProductImageSecurity {
     }
 
     /**
-     * TODO: Triển khai isOwner — pattern y hệt ProductVariantSecurity:
-     * 1. Check authentication != null && isAuthenticated
-     * 2. email = authentication.getName()
-     * 3. find user → false nếu không có
-     * 4. find image → false nếu không có
-     * 5. Compare image.getProduct().getSeller().getId() với user.getId()
+     * Check user đang login có phải seller (chủ sở hữu) của product chứa image không.
+     * Image ownership = ownership của Product → đi qua image.getProduct().getSeller().
      */
     public boolean isOwner(Long imageId, Authentication authentication) {
-        // TODO: Triển khai
-        return false;
+        if (authentication == null || !authentication.isAuthenticated()) return false;
+        String email = authentication.getName();
+        Optional<ProductImage> image = imageRepository.findById(imageId);
+        Optional<User> user = userRepository.findByEmail(email);
+        if (image.isEmpty() || user.isEmpty()) return false;
+        return user.get().getId().equals(image.get().getProduct().getSeller().getId());
     }
 }

@@ -52,8 +52,6 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
-    // TODO: Thêm getter/setter cho images. Bỏ getter/setter của imageUrl nếu IDE chưa tự xoá.
-
     public String getSlug() {
         return slug;
     }

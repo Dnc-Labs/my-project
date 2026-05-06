@@ -8,16 +8,6 @@ import java.math.BigDecimal;
  * DTO tạo variant cho 1 product.
  * KHÔNG có productId — productId lấy từ path variable của URL
  * (POST /api/products/{productId}/variants).
- *
- * TODO: Thêm các field với validation:
- * - size (String, bắt buộc)              → @NotBlank
- * - color (String, bắt buộc)             → @NotBlank
- * - sku (String, bắt buộc)               → @NotBlank
- * - price (BigDecimal, > 0)              → @NotNull + @Positive
- * - stock (Integer, >= 0, default 0)     → @NotNull + @PositiveOrZero
- * - imageUrl (String, optional)
- *
- * TODO: Tạo getter/setter cho tất cả field
  */
 public class CreateProductVariantRequest {
     @NotBlank

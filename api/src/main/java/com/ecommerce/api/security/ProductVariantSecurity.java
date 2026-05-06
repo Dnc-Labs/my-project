@@ -32,15 +32,8 @@ public class ProductVariantSecurity {
     }
 
     /**
-     * TODO: Triển khai isOwner cho variant
-     * 1. Check authentication != null và đã authenticated
-     * 2. Lấy email từ authentication.getName()
-     * 3. Tìm user theo email → false nếu không có
-     * 4. Tìm variant theo variantId → false nếu không có
-     * 5. So sánh variant.getProduct().getSeller().getId() với user.getId()
-     *
-     * Pattern giống ProductSecurity.isOwner — chỉ khác ở bước 5
-     * (đi qua getProduct() rồi mới đến seller).
+     * Check user đang login có phải seller (chủ sở hữu) của product chứa variant không.
+     * Đi qua variant.getProduct().getSeller().
      */
     public boolean isOwner(Long variantId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) return false;

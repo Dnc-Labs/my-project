@@ -1,6 +1,7 @@
 package com.ecommerce.api.exception;
 
-import com.ecommerce.api.dto.response.BaseResponse;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,14 +10,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.stream.Collectors;
+import com.ecommerce.api.dto.response.BaseResponse;
 
 /**
  * Xử lý exception tập trung cho toàn bộ API.
  *
  * @RestControllerAdvice = @ControllerAdvice + @ResponseBody
  * Giống error-handling middleware trong Express:
- *   app.use((err, req, res, next) => { res.status(500).json({...}) })
+ * app.use((err, req, res, next) => { res.status(500).json({...}) })
  * Nhưng thay vì 1 middleware, Spring cho phép bắt TỪNG loại exception riêng.
  */
 @RestControllerAdvice
@@ -55,6 +56,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResource.class)
     public ResponseEntity<BaseResponse<Void>> handleDuplicateResource(DuplicateResource e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(BaseResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<BaseResponse<Void>> handleBusinessRuleException(BusinessRuleException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(BaseResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<BaseResponse<Void>> handeInvalidFileException(InvalidFileException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.error(e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

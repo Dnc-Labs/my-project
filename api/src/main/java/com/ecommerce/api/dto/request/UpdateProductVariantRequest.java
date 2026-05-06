@@ -8,19 +8,8 @@ import java.math.BigDecimal;
 /**
  * DTO update variant. Tất cả field optional.
  *
- * TODO: Thêm các field:
- * - size (String)
- * - color (String)
- * - sku (String)
- * - price (BigDecimal) → @Positive (không null check vì optional)
- * - stock (Integer) → @PositiveOrZero
- * - imageUrl (String)
- *
- * Lưu ý: KHÔNG có productId — variant đã thuộc 1 product cố định,
- *        không cho phép chuyển variant sang product khác qua API update.
- *        Nếu cần, tạo API riêng "transfer variant".
- *
- * TODO: Tạo getter/setter
+ * KHÔNG có productId — variant đã thuộc 1 product cố định, không cho chuyển
+ * variant sang product khác qua API update. Nếu cần, tạo API riêng "transfer variant".
  */
 public class UpdateProductVariantRequest {
     private String size;

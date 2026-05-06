@@ -7,21 +7,6 @@ import java.math.BigDecimal;
 /**
  * DTO response cho ProductVariant.
  * Flat productId (không embed nguyên Product object để tránh nặng + circular).
- *
- * TODO: Thêm các field:
- * - id (Long)
- * - size (String)
- * - color (String)
- * - sku (String)
- * - price (BigDecimal)
- * - stock (Integer)
- * - imageUrl (String)
- * - productId (Long) — chỉ id, không embed
- *
- * TODO: Tạo constructor, getter/setter
- *
- * TODO: Static method:
- *   public static ProductVariantResponse fromEntity(ProductVariant variant) { ... }
  */
 public class ProductVariantResponse {
     private Long id;

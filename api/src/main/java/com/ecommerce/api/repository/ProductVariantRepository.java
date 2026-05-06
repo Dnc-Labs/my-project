@@ -9,14 +9,8 @@ import java.util.Optional;
 
 /**
  * Repository cho ProductVariant.
- *
- * TODO: Thêm các custom query method:
- * - existsBySku(String sku) → check trùng SKU khi tạo
- * - existsByProductIdAndSizeAndColor(Long productId, String size, String color)
- *   → check trùng combination size+color trong cùng 1 product (DB cũng có
- *     unique constraint, nhưng check trước để trả lỗi rõ ràng hơn)
- * - findBySku(String sku) → lookup theo SKU (dùng khi scan barcode)
- * - List<ProductVariant> findByProductId(Long productId) → list variants của product
+ * existsByProductIdAndSizeAndColor — DB có unique constraint nhưng check
+ * trước ở Service để trả lỗi rõ ràng (thay vì SQLIntegrityConstraintViolation).
  */
 @Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {

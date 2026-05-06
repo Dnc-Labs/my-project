@@ -1,14 +1,24 @@
 package com.ecommerce.api.services;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import jakarta.transaction.Transactional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.api.dto.response.ProductImageResponse;
+import com.ecommerce.api.entity.Product;
+import com.ecommerce.api.entity.ProductImage;
+import com.ecommerce.api.exception.BusinessRuleException;
+import com.ecommerce.api.exception.ResourceNotFoundException;
 import com.ecommerce.api.repository.ProductImageRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.storage.FileValidator;
 import com.ecommerce.api.storage.StorageService;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
+import com.ecommerce.api.storage.UploadResult;
 
 @Service
 public class ProductImageService {
@@ -21,10 +31,11 @@ public class ProductImageService {
     private final StorageService storageService;
     private final FileValidator fileValidator;
 
-    public ProductImageService(ProductImageRepository imageRepository,
-                                ProductRepository productRepository,
-                                StorageService storageService,
-                                FileValidator fileValidator) {
+    public ProductImageService(
+            ProductImageRepository imageRepository,
+            ProductRepository productRepository,
+            StorageService storageService,
+            FileValidator fileValidator) {
         this.imageRepository = imageRepository;
         this.productRepository = productRepository;
         this.storageService = storageService;
@@ -32,67 +43,63 @@ public class ProductImageService {
     }
 
     /**
-     * TODO: Upload ảnh cho product
+     * Upload ảnh cho product. Ảnh đầu tiên (count == 0) auto trở thành primary.
      *
-     * 1. Tìm product theo productId → throw ResourceNotFoundException nếu không có
-     * 2. Validate file: fileValidator.validateImage(file)
-     * 3. Check limit: nếu count ảnh hiện tại của product >= MAX_IMAGES_PER_PRODUCT
-     *    → throw exception (để tránh spam)
-     * 4. Upload file lên storage:
-     *    UploadResult result = storageService.upload(file, STORAGE_FOLDER);
-     * 5. Tạo ProductImage entity:
-     *    - key = result.key()
-     *    - url = result.url()
-     *    - originalName = file.getOriginalFilename()
-     *    - product = product (set entity)
-     *    - createdAt = LocalDateTime.now()
-     *    - isPrimary = (count hiện tại == 0) — ảnh đầu tiên auto primary
-     * 6. Save và trả ProductImageResponse
-     *
-     * Lưu ý transaction: nếu storage upload thành công nhưng DB save fail
-     *                    → file rác trên storage. Production cần xử lý cleanup
-     *                    (compensating transaction). Giờ skip cho đơn giản.
+     * Note: nếu storage upload thành công nhưng DB save fail → file rác trên
+     * storage. Cần compensating transaction cho production. Giờ skip cho đơn giản.
      */
     public ProductImageResponse uploadImage(Long productId, MultipartFile file) {
-        // TODO: Triển khai
-        return null;
+        Product product = this.productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
+                "Product not found"));
+        this.fileValidator.validateImage(file);
+        long cntImagesPerProduct = this.imageRepository.countByProductId(productId);
+        if (cntImagesPerProduct >= MAX_IMAGES_PER_PRODUCT)
+            throw new BusinessRuleException("Product has reached the image limit (max " + MAX_IMAGES_PER_PRODUCT + ")");
+        UploadResult result = storageService.upload(file, STORAGE_FOLDER);
+        ProductImage image = new ProductImage();
+        image.setKey(result.key());
+        image.setUrl(result.url());
+        image.setOriginalName(file.getOriginalFilename());
+        image.setProduct(product);
+        image.setIsPrimary(cntImagesPerProduct == 0);
+        image.setCreatedAt(LocalDateTime.now());
+        ProductImage saved = imageRepository.save(image);
+        return ProductImageResponse.fromEntity(saved);
     }
 
-    /**
-     * TODO: List tất cả ảnh của product (public)
-     */
     public List<ProductImageResponse> getImagesByProduct(Long productId) {
-        // TODO: Check product tồn tại + return list
-        return null;
+        if (!productRepository.existsById(productId)) throw new ResourceNotFoundException("Product not found");
+        List<ProductImage> images = this.imageRepository.findByProductId(productId);
+        return images.stream().map(ProductImageResponse::fromEntity).toList();
     }
 
     /**
-     * TODO: Set ảnh isPrimary
-     *
-     * 1. Tìm image mới theo imageId → throw nếu không có
-     * 2. Tìm image primary hiện tại của cùng product
-     * 3. Nếu primary cũ != null && primary cũ != image mới → set isPrimary=false cho cũ
-     * 4. Set image mới isPrimary=true
-     * 5. Save cả 2 (hoặc dùng @Transactional)
+     * Set ảnh isPrimary cho 1 product. Idempotent (gọi nhiều lần với cùng imageId
+     * không gây side effect). Dùng @Transactional + dirty checking để auto save.
      */
+    @Transactional
     public ProductImageResponse setPrimary(Long imageId) {
-        // TODO: Triển khai
-        return null;
+        ProductImage image = imageRepository.findById(imageId).orElseThrow(() -> new ResourceNotFoundException(
+                "Image not found"));
+        Optional<ProductImage> primaryImage = imageRepository.findByProductIdAndIsPrimaryTrue(image.getProduct().getId());
+        // Đã là primary rồi → no-op
+        if (primaryImage.isPresent() && primaryImage.get().getId().equals(image.getId()))
+            return ProductImageResponse.fromEntity(image);
+        // Set image mới = primary
+        image.setIsPrimary(true);
+        primaryImage.ifPresent(old -> old.setIsPrimary(false));
+        return ProductImageResponse.fromEntity(image);
     }
 
-    /**
-     * TODO: Xoá ảnh
-     *
-     * 1. Tìm image theo imageId
-     * 2. Xoá file trên storage: storageService.delete(image.getKey())
-     * 3. Xoá record DB
-     *
-     * Lưu ý thứ tự: xoá storage trước, DB sau.
-     * Nếu DB fail → còn record trỏ tới file đã xoá → broken.
-     * Pattern an toàn: dùng @Transactional + xoá DB trước, storage sau (afterCommit hook).
-     * Skip cho đơn giản giai đoạn này.
-     */
+    @Transactional
     public void deleteImage(Long imageId) {
-        // TODO: Triển khai
+        ProductImage image = imageRepository.findById(imageId).orElseThrow(() -> new ResourceNotFoundException(
+                "Image not found"));
+        String key = image.getKey();
+        imageRepository.delete(image);
+        // Note: storage.delete() throws RuntimeException nếu fail → @Transactional rollback DB.
+        // An toàn cho local filesystem (atomic). Khi migrate sang S3, cần đổi sang
+        // TransactionSynchronization.afterCommit() để tránh broken-link khi network fail.
+        storageService.delete(key);
     }
 }
