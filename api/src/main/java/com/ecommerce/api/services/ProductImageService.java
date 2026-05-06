@@ -57,7 +57,7 @@ public class ProductImageService {
             throw new BusinessRuleException("Product has reached the image limit (max " + MAX_IMAGES_PER_PRODUCT + ")");
         UploadResult result = storageService.upload(file, STORAGE_FOLDER);
         ProductImage image = new ProductImage();
-        image.setKey(result.key());
+        image.setStorageKey(result.key());
         image.setUrl(result.url());
         image.setOriginalName(file.getOriginalFilename());
         image.setProduct(product);
@@ -95,7 +95,7 @@ public class ProductImageService {
     public void deleteImage(Long imageId) {
         ProductImage image = imageRepository.findById(imageId).orElseThrow(() -> new ResourceNotFoundException(
                 "Image not found"));
-        String key = image.getKey();
+        String key = image.getStorageKey();
         imageRepository.delete(image);
         // Note: storage.delete() throws RuntimeException nếu fail → @Transactional rollback DB.
         // An toàn cho local filesystem (atomic). Khi migrate sang S3, cần đổi sang

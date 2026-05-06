@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 /**
  * ProductImage — 1 ảnh thuộc về 1 Product. Mỗi product có nhiều ảnh.
  *
- * - key: định danh trên storage (UUID-based, ví dụ "550e8400-...jpg")
+ * - storageKey: định danh trên storage (UUID-based, ví dụ "550e8400-...jpg")
+ *   Đặt tên storageKey thay vì key vì "key" là reserved word trong MySQL.
  * - url: URL public để client truy cập ảnh
  * - originalName: tên file gốc client upload (để FE hiển thị/download lại với tên đẹp)
  * - isPrimary: ảnh đại diện. Mỗi product chỉ có 1 ảnh isPrimary=true
@@ -22,7 +23,7 @@ public class ProductImage {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String key;
+    private String storageKey;
 
     @Column(nullable = false, length = 500)
     private String url;
@@ -46,12 +47,12 @@ public class ProductImage {
         this.id = id;
     }
 
-    public String getKey() {
-        return key;
+    public String getStorageKey() {
+        return storageKey;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setStorageKey(String storageKey) {
+        this.storageKey = storageKey;
     }
 
     public String getUrl() {
