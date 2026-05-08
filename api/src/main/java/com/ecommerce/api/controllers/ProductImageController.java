@@ -3,6 +3,7 @@ package com.ecommerce.api.controllers;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,7 +38,7 @@ public class ProductImageController {
         this.imageService = imageService;
     }
 
-    @PostMapping("/products/{productId}/images")
+    @PostMapping(value = "/products/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN') or (hasRole('SELLER') and @productSecurity.isOwner(#productId, authentication))")
     public ResponseEntity<BaseResponse<ProductImageResponse>> uploadImage(
             @PathVariable Long productId,

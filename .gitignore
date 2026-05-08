@@ -2,3 +2,24 @@
 .idea/
 .DS_Store
 *.iml
+
+# Maven
+target/
+
+# Spring Boot logs
+*.log
+logs/
+
+# Uploaded files (runtime data — không commit vào git)
+uploads/
+
+# Personal scratch notes
+note.txt
+
+# IDE
+*.swp
+*.swo
+.vscode/
+
+# OS
+Thumbs.db
