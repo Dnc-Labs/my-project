@@ -4,7 +4,7 @@ spring:
   application:
     name: my-app
   datasource:
-    url: jdbc:mysql://localhost:3306/ecommerce
+    url: jdbc:mysql://localhost:3309/ecommerce
     username: root
     password: admin
   jpa:
