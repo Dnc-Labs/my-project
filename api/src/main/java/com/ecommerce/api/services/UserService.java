@@ -4,56 +4,45 @@ import com.ecommerce.api.dto.request.CreateUserRequest;
 import com.ecommerce.api.dto.request.UpdateUserRequest;
 import com.ecommerce.api.dto.response.UserResponse;
 import com.ecommerce.api.entity.User;
+import com.ecommerce.api.exception.DuplicateResource;
 import com.ecommerce.api.exception.ResourceNotFoundException;
+import com.ecommerce.api.mapper.UserMapper;
 import com.ecommerce.api.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final UserMapper userMapper;
 
     public UserResponse createUser(CreateUserRequest request) {
-        Optional<User> existUser = userRepository.findByEmail(request.getEmail());
-        if(existUser.isPresent()) throw new RuntimeException("Email is already registered");
-        String passwordHash = this.passwordEncoder.encode(request.getPassword());
-
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setPassword(passwordHash);
-        user.setPhone(request.getPhone());
-        user.setAddress(request.getAddress());
+        boolean existUser = userRepository.existsByEmail(request.getEmail());
+        if (existUser) throw new DuplicateResource("Email is already registered");
+        User user = userMapper.fromRequestDto(request);
+        // hash password sau khi map vì mapper cố ý ignore field password
+        user.setPassword(this.passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         User createdUser = this.userRepository.save(user);
-        return UserResponse.fromEntity(createdUser);
+        return userMapper.fromEntity(createdUser);
     }
 
     public UserResponse getUserById(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return UserResponse.fromEntity(user);
+        return userMapper.fromEntity(user);
     }
 
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (request.getFullName() != null && !request.getFullName().isBlank())
-            user.setFullName(request.getFullName());
-        if (request.getAddress() != null && !request.getAddress().isBlank())
-            user.setAddress(request.getAddress());
-        if (request.getPhone() != null && !request.getPhone().isBlank())
-            user.setPhone(request.getPhone());
+        userMapper.updateEntity(request, user);
         user.setUpdatedAt(LocalDateTime.now());
         User userUpdate = this.userRepository.save(user);
-        return UserResponse.fromEntity(userUpdate);
+        return userMapper.fromEntity(userUpdate);
     }
 }
