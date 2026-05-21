@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-18
+**Cập nhật lần cuối:** 2026-05-21
 
 ---
 
@@ -22,7 +22,8 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
-- ✅ **3.2.5 Phần 2: Refactor module User** (vừa xong) — `docs/3.2.5-refactor-user-module.md`
+- ✅ **3.2.5 Phần 3: Refactor module Category** (vừa xong) — `docs/3.2.5-refactor-category-module.md`
+- ✅ **3.2.5 Phần 2: Refactor module User** — `docs/3.2.5-refactor-user-module.md`
 - ✅ **3.2.5 Phần 1: Setup Lombok + MapStruct** — `docs/3.2.5-lombok-mapstruct-setup.md`
 - ✅ **3.2 Buổi B Phần 2: Multi-image upload + deep dive File I/O** — `docs/3.2-product-image-upload.md`
 - ✅ **3.2 Buổi B Phần 1: ProductVariant + JPA Lifecycle** — `docs/3.2-product-variant.md`
@@ -40,8 +41,8 @@ Setup dependency + plugin đã xong (xem `docs/3.2.5-lombok-mapstruct-setup.md`)
 
 **Thứ tự đã chốt:**
 1. ✅ **User module** — đã xong, xem `docs/3.2.5-refactor-user-module.md`
-2. **Category module** ← TIẾP THEO
-3. Product + ProductVariant + ProductImage module (phức tạp nhất)
+2. ✅ **Category module** — đã xong, xem `docs/3.2.5-refactor-category-module.md`
+3. **Product + ProductVariant + ProductImage module** ← TIẾP THEO (phức tạp nhất, có quan hệ 2 chiều)
 
 **Pattern áp dụng (lặp lại y hệt cho Category & Product):**
 - Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có thể có quan hệ 2 chiều)
@@ -56,6 +57,13 @@ Setup dependency + plugin đã xong (xem `docs/3.2.5-lombok-mapstruct-setup.md`)
 - Javadoc phải đặt TRƯỚC annotation
 - Sau khi build pass, dọn TODO scaffolding, chỉ giữ comment WHY
 
+**Lưu ý quan trọng từ Category module (mới rút kinh nghiệm):**
+- `@BeanMapping(IGNORE)` **CHỈ** dùng cho method update có `@MappingTarget`, KHÔNG đặt ở method create (vô nghĩa, gây nhầm lẫn)
+- MapStruct **TỰ ĐỆ QUY** cho self-reference (`List<Category> children` → `List<CategoryResponse> children`) — chỉ cần có sẵn method map cùng kiểu
+- Field khác type giữa request/entity (`parentId: Long` ↔ `parent: Category`) → mapper `ignore`, service tự `findById` + set (Option A)
+- Đặt tên method mapper ngắn theo pattern: `fromEntity` / `fromRequestDto` / `updateEntity`, KHÔNG lặp tên type trong method name
+- Validate-then-mutate là **purist**, mutate-then-validate-then-set rời cho field cần validate là **pragmatic** — cả 2 đều OK miễn có `@Transactional` + `RuntimeException`
+
 ---
 
 ## 3. Bước tiếp theo cụ thể (action items)
@@ -64,21 +72,21 @@ Khi mở Claude trên máy mới, paste prompt sau để có context ngay:
 
 ```
 Hi Claude, đọc docs/HANDOFF.md để biết trạng thái dự án.
-Hôm nay tiếp tục bài 3.2.5 Phần 2 — sang module Category.
-User module đã xong (xem docs/3.2.5-refactor-user-module.md),
-áp dụng cùng pattern cho Category.
+Hôm nay tiếp tục bài 3.2.5 Phần 2 — sang module Product + ProductVariant + ProductImage.
+User và Category module đã xong (xem docs/3.2.5-refactor-user-module.md và
+docs/3.2.5-refactor-category-module.md), áp dụng cùng pattern cho Product.
 ```
 
-**Checklist module Category (sắp làm):**
-- [ ] `entity/Category.java` — `@Getter @Setter @NoArgsConstructor`
-- [ ] `dto/request/CreateCategoryRequest.java` + `UpdateCategoryRequest.java` — `@Data`
-- [ ] `dto/response/CategoryResponse.java` — `@Data`, xoá `fromEntity` viết tay
-- [ ] `services/CategoryService.java` — `@RequiredArgsConstructor`, inject `CategoryMapper`
-- [ ] `controllers/CategoryController.java` — `@RequiredArgsConstructor`
-- [ ] Tạo `mapper/CategoryMapper.java` — 3 method, ignore field theo policy `ERROR`
-- [ ] Verify `./mvnw clean compile` pass + test runtime API category
+**Checklist module Product (sắp làm):**
+- [ ] `entity/Product.java`, `ProductVariant.java`, `ProductImage.java` — `@Getter @Setter @NoArgsConstructor`
+- [ ] `dto/request/Create*Request.java` + `Update*Request.java` — `@Getter @Setter` hoặc `@Data`
+- [ ] `dto/response/ProductResponse.java`, etc. — `@Getter @Setter`, xoá `fromEntity` viết tay
+- [ ] `services/ProductService.java` — `@RequiredArgsConstructor`, inject `ProductMapper`
+- [ ] `controllers/ProductController.java` — `@RequiredArgsConstructor`
+- [ ] Tạo `mapper/ProductMapper.java` — 3 method + xử lý **nested mapping** (`@Mapping(source = "seller.id", target = "sellerId")`, etc.)
+- [ ] Verify `./mvnw clean compile` pass + test runtime API product
 
-**Sau Category:** Product + ProductVariant + ProductImage (phức tạp nhất, có quan hệ 2 chiều — cần xử lý nested mapping `@Mapping(source = "seller.id", target = "sellerId")`).
+**Sau Product:** **buổi cleanup chuyên sâu** (xem memory `project-production-cleanup-session`).
 
 **Sau bài 3.2.5:** trước khi sang 3.3, có **buổi cleanup chuyên sâu** đã chốt (xem memory `project-production-cleanup-session`) để hardening codebase lên production-grade: `@Transactional`, `@Version` optimistic locking, `@CreationTimestamp`/Auditing, `@Slf4j` log audit, validation chặt hơn, xử lý TOCTOU race, cân nhắc `record` cho Response DTO.
 
