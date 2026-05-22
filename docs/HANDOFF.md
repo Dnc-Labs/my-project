@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-21
+**Cập nhật lần cuối:** 2026-05-22
 
 ---
 
@@ -22,7 +22,8 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
-- ✅ **3.2.5 Phần 3: Refactor module Category** (vừa xong) — `docs/3.2.5-refactor-category-module.md`
+- ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** (vừa xong) — `docs/3.2.5-refactor-product-module.md`
+- ✅ **3.2.5 Phần 3: Refactor module Category** — `docs/3.2.5-refactor-category-module.md`
 - ✅ **3.2.5 Phần 2: Refactor module User** — `docs/3.2.5-refactor-user-module.md`
 - ✅ **3.2.5 Phần 1: Setup Lombok + MapStruct** — `docs/3.2.5-lombok-mapstruct-setup.md`
 - ✅ **3.2 Buổi B Phần 2: Multi-image upload + deep dive File I/O** — `docs/3.2-product-image-upload.md`
@@ -35,34 +36,49 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 
 ### Đang dang dở — **bắt đầu từ đây khi quay lại**
 
-**Bài 3.2.5 Phần 2: Refactor module-by-module bằng Lombok + MapStruct**
+**Bài 3.2.5 đã KẾT THÚC** — toàn bộ 4 module (setup, User, Category, Product+Variant+Image) đã refactor sang Lombok + MapStruct.
 
-Setup dependency + plugin đã xong (xem `docs/3.2.5-lombok-mapstruct-setup.md`). Build pass.
+**Tiếp theo: BUỔI CLEANUP CHUYÊN SÂU** (đã chốt từ trước, không phải bài ROADMAP).
 
-**Thứ tự đã chốt:**
-1. ✅ **User module** — đã xong, xem `docs/3.2.5-refactor-user-module.md`
-2. ✅ **Category module** — đã xong, xem `docs/3.2.5-refactor-category-module.md`
-3. **Product + ProductVariant + ProductImage module** ← TIẾP THEO (phức tạp nhất, có quan hệ 2 chiều)
+Đây là buổi hardening codebase lên production-grade trước khi sang bài 3.3. Backlog đầy đủ ở memory `project-production-cleanup-session`. Top priorities:
+- `@Transactional` ở mọi service (User, Category, Product, ProductVariant, ProductImage)
+- `@Version` optimistic locking cho entity sửa được
+- Auditing (`@CreationTimestamp` / `@UpdateTimestamp` hoặc Spring Data JPA Auditing với `BaseEntity`)
+- Fix bug **circular check Category nông** (đang chỉ check 1 cấp con, cần recursive)
+- Convert `RuntimeException` → `BadRequestException` / `ConflictException` / `BusinessRuleException`
+- `@AuthenticationPrincipal` thay cho `SecurityContextHolder` truy xuất thủ công ở `ProductService.createProduct`
+- Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB lifecycle)
+- TOCTOU race ở các chỗ `existsByX` + `save` ở 2 transaction tách biệt
 
-**Pattern áp dụng (lặp lại y hệt cho Category & Product):**
-- Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có thể có quan hệ 2 chiều)
-- DTO request/response: `@Data`
+**Pattern áp dụng (3 module đã làm theo, để tham khảo khi xử lý bài sau):**
+- Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có quan hệ)
+- DTO request/response: `@Getter @Setter` hoặc `@Data` (đều OK)
 - Service + Controller: `@RequiredArgsConstructor`, dependency `final`
 - Tạo `*Mapper` interface với 3 method: `fromEntity`, `fromRequestDto`, `updateEntity(req, @MappingTarget entity)`
 - Vì `unmappedTargetPolicy=ERROR` global → phải `@Mapping(target=..., ignore=true)` cho MỌI field entity không có trong request
 
-**Lưu ý quan trọng từ User module (đã rút kinh nghiệm):**
+**Lưu ý quan trọng đã rút kinh nghiệm:**
+
+*Từ User module:*
 - KHÔNG dùng `@AllArgsConstructor` trên Spring bean (chỉ dùng `@RequiredArgsConstructor`)
 - Nếu request có field giống entity nhưng cần xử lý security (password) → BẮT BUỘC `@Mapping(ignore=true)` rồi service tự set
 - Javadoc phải đặt TRƯỚC annotation
-- Sau khi build pass, dọn TODO scaffolding, chỉ giữ comment WHY
 
-**Lưu ý quan trọng từ Category module (mới rút kinh nghiệm):**
-- `@BeanMapping(IGNORE)` **CHỈ** dùng cho method update có `@MappingTarget`, KHÔNG đặt ở method create (vô nghĩa, gây nhầm lẫn)
-- MapStruct **TỰ ĐỆ QUY** cho self-reference (`List<Category> children` → `List<CategoryResponse> children`) — chỉ cần có sẵn method map cùng kiểu
-- Field khác type giữa request/entity (`parentId: Long` ↔ `parent: Category`) → mapper `ignore`, service tự `findById` + set (Option A)
-- Đặt tên method mapper ngắn theo pattern: `fromEntity` / `fromRequestDto` / `updateEntity`, KHÔNG lặp tên type trong method name
-- Validate-then-mutate là **purist**, mutate-then-validate-then-set rời cho field cần validate là **pragmatic** — cả 2 đều OK miễn có `@Transactional` + `RuntimeException`
+*Từ Category module:*
+- `@BeanMapping(IGNORE)` **CHỈ** dùng cho method update có `@MappingTarget`, KHÔNG đặt ở method create
+- MapStruct **TỰ ĐỆ QUY** cho self-reference — chỉ cần có sẵn method map cùng kiểu
+- Field khác type giữa request/entity (`parentId: Long` ↔ `parent: Category`) → mapper `ignore`, service tự `findById` + set
+- Tên method mapper ngắn theo pattern: `fromEntity` / `fromRequestDto` / `updateEntity`, KHÔNG lặp tên type
+- Pragmatic-update (mapper map field an toàn → validate-then-set rời cho field cần validate) là OK miễn có `@Transactional` + `RuntimeException`
+
+*Từ Product module:*
+- Nested mapping: `@Mapping(target = "categoryName", source = "category.name")` — MapStruct **tự null-safe** cho nested access
+- Compose mapper qua `@Mapper(uses = {OtherMapper.class})` — quên `uses` → compile error với policy `ERROR`
+- Custom presentation logic (vd `primaryImageUrl` lọc list) → dùng `default method` + `@Named` + `qualifiedByName` trong mapper, KHÔNG đẩy sang service
+- Quy tắc embed vs tách: child resource nhỏ + thường-xuyên-cần → embed; lớn + tuỳ chọn → API riêng
+- Defensive NPE check rẻ thì nên làm (`getCategory() == null || !... .equals(...)`)
+- Naming convention nhất quán cả mapper + repo: `productVariantMapper` ↔ `productVariantRepository` (không mix rút gọn)
+- Build mapper xong PHẢI `./mvnw clean compile`, đừng tin Maven cache
 
 ---
 
@@ -72,25 +88,12 @@ Khi mở Claude trên máy mới, paste prompt sau để có context ngay:
 
 ```
 Hi Claude, đọc docs/HANDOFF.md để biết trạng thái dự án.
-Hôm nay tiếp tục bài 3.2.5 Phần 2 — sang module Product + ProductVariant + ProductImage.
-User và Category module đã xong (xem docs/3.2.5-refactor-user-module.md và
-docs/3.2.5-refactor-category-module.md), áp dụng cùng pattern cho Product.
+Bài 3.2.5 (refactor Lombok + MapStruct) đã xong cả 4 phần.
+Hôm nay bắt đầu BUỔI CLEANUP CHUYÊN SÂU (production-grade hardening)
+trước khi sang bài 3.3. Đọc memory project-production-cleanup-session để xem backlog.
 ```
 
-**Checklist module Product (sắp làm):**
-- [ ] `entity/Product.java`, `ProductVariant.java`, `ProductImage.java` — `@Getter @Setter @NoArgsConstructor`
-- [ ] `dto/request/Create*Request.java` + `Update*Request.java` — `@Getter @Setter` hoặc `@Data`
-- [ ] `dto/response/ProductResponse.java`, etc. — `@Getter @Setter`, xoá `fromEntity` viết tay
-- [ ] `services/ProductService.java` — `@RequiredArgsConstructor`, inject `ProductMapper`
-- [ ] `controllers/ProductController.java` — `@RequiredArgsConstructor`
-- [ ] Tạo `mapper/ProductMapper.java` — 3 method + xử lý **nested mapping** (`@Mapping(source = "seller.id", target = "sellerId")`, etc.)
-- [ ] Verify `./mvnw clean compile` pass + test runtime API product
-
-**Sau Product:** **buổi cleanup chuyên sâu** (xem memory `project-production-cleanup-session`).
-
-**Sau bài 3.2.5:** trước khi sang 3.3, có **buổi cleanup chuyên sâu** đã chốt (xem memory `project-production-cleanup-session`) để hardening codebase lên production-grade: `@Transactional`, `@Version` optimistic locking, `@CreationTimestamp`/Auditing, `@Slf4j` log audit, validation chặt hơn, xử lý TOCTOU race, cân nhắc `record` cho Response DTO.
-
-**Sau cleanup:** sang **3.3 — Tìm kiếm & Lọc sản phẩm** (search, filter, `Pageable`, có thể cả Elasticsearch).
+**Sau cleanup session:** sang **3.3 — Tìm kiếm & Lọc sản phẩm** (search, filter, `Pageable`, có thể cả Elasticsearch).
 
 ---
 

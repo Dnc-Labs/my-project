@@ -4,7 +4,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.ecommerce.api.mapper.ProductImageMapper;
+
 import jakarta.transaction.Transactional;
+
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,7 @@ import com.ecommerce.api.storage.StorageService;
 import com.ecommerce.api.storage.UploadResult;
 
 @Service
+@RequiredArgsConstructor
 public class ProductImageService {
 
     private static final int MAX_IMAGES_PER_PRODUCT = 8;
@@ -30,17 +35,8 @@ public class ProductImageService {
     private final ProductRepository productRepository;
     private final StorageService storageService;
     private final FileValidator fileValidator;
+    private final ProductImageMapper imageMapper;
 
-    public ProductImageService(
-            ProductImageRepository imageRepository,
-            ProductRepository productRepository,
-            StorageService storageService,
-            FileValidator fileValidator) {
-        this.imageRepository = imageRepository;
-        this.productRepository = productRepository;
-        this.storageService = storageService;
-        this.fileValidator = fileValidator;
-    }
 
     /**
      * Upload ảnh cho product. Ảnh đầu tiên (count == 0) auto trở thành primary.
@@ -64,13 +60,13 @@ public class ProductImageService {
         image.setIsPrimary(cntImagesPerProduct == 0);
         image.setCreatedAt(LocalDateTime.now());
         ProductImage saved = imageRepository.save(image);
-        return ProductImageResponse.fromEntity(saved);
+        return imageMapper.fromEntity(saved);
     }
 
     public List<ProductImageResponse> getImagesByProduct(Long productId) {
         if (!productRepository.existsById(productId)) throw new ResourceNotFoundException("Product not found");
         List<ProductImage> images = this.imageRepository.findByProductId(productId);
-        return images.stream().map(ProductImageResponse::fromEntity).toList();
+        return images.stream().map(imageMapper::fromEntity).toList();
     }
 
     /**
@@ -84,11 +80,11 @@ public class ProductImageService {
         Optional<ProductImage> primaryImage = imageRepository.findByProductIdAndIsPrimaryTrue(image.getProduct().getId());
         // Đã là primary rồi → no-op
         if (primaryImage.isPresent() && primaryImage.get().getId().equals(image.getId()))
-            return ProductImageResponse.fromEntity(image);
+            return imageMapper.fromEntity(image);
         // Set image mới = primary
         image.setIsPrimary(true);
         primaryImage.ifPresent(old -> old.setIsPrimary(false));
-        return ProductImageResponse.fromEntity(image);
+        return imageMapper.fromEntity(image);
     }
 
     @Transactional

@@ -1,9 +1,10 @@
 package com.ecommerce.api.dto.request;
 
 import jakarta.validation.constraints.*;
-
+import lombok.Data;
 import java.math.BigDecimal;
 
+@Data
 public class CreateProductRequest {
     @NotBlank
     private String name;
@@ -11,14 +12,12 @@ public class CreateProductRequest {
     @NotBlank
     private String slug;
 
-
     @NotBlank
     private String sku;
 
     @Positive
     @NotNull
     private BigDecimal price;
-
 
     private String description;
 
@@ -28,61 +27,4 @@ public class CreateProductRequest {
 
     @NotNull
     private Long categoryId;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
 }

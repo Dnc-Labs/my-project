@@ -2,6 +2,9 @@ package com.ecommerce.api.dto.request;
 
 import jakarta.validation.constraints.*;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
 /**
@@ -9,6 +12,9 @@ import java.math.BigDecimal;
  * KHÔNG có productId — productId lấy từ path variable của URL
  * (POST /api/products/{productId}/variants).
  */
+
+@Getter
+@Setter
 public class CreateProductVariantRequest {
     @NotBlank
     private String size;
@@ -29,51 +35,4 @@ public class CreateProductVariantRequest {
 
     private String imageUrl;
 
-    public String getSize() {
-        return size;
-    }
-
-    public void setSize(String size) {
-        this.size = size;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
 }

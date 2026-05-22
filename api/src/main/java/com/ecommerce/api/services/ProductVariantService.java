@@ -7,24 +7,21 @@ import com.ecommerce.api.entity.Product;
 import com.ecommerce.api.entity.ProductVariant;
 import com.ecommerce.api.exception.DuplicateResource;
 import com.ecommerce.api.exception.ResourceNotFoundException;
+import com.ecommerce.api.mapper.ProductVariantMapper;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.repository.ProductVariantRepository;
 import com.ecommerce.api.utilities.CheckData;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProductVariantService {
 
     private final ProductVariantRepository variantRepository;
     private final ProductRepository productRepository;
-
-    public ProductVariantService(ProductVariantRepository variantRepository,
-                                  ProductRepository productRepository) {
-        this.variantRepository = variantRepository;
-        this.productRepository = productRepository;
-    }
+    private final ProductVariantMapper variantMapper;
 
     public ProductVariantResponse createVariant(Long productId, CreateProductVariantRequest request) {
         Product product = productRepository.findById(productId)
@@ -37,17 +34,10 @@ public class ProductVariantService {
             throw new DuplicateResource("Variant already exists");
         }
 
-        ProductVariant variant = new ProductVariant();
-        variant.setSize(request.getSize());
-        variant.setColor(request.getColor());
-        variant.setSku(request.getSku());
-        variant.setImageUrl(request.getImageUrl());
-        variant.setPrice(request.getPrice());
-        variant.setStock(request.getStock());
+        ProductVariant variant = variantMapper.fromRequestDto(request);
         variant.setProduct(product);
-
         ProductVariant saved = variantRepository.save(variant);
-        return ProductVariantResponse.fromEntity(saved);
+        return variantMapper.fromEntity(saved);
     }
 
     public List<ProductVariantResponse> getVariantsByProduct(Long productId) {
@@ -55,12 +45,12 @@ public class ProductVariantService {
             throw new ResourceNotFoundException("Product not found");
         }
         List<ProductVariant> variants = variantRepository.findByProductId(productId);
-        return variants.stream().map(ProductVariantResponse::fromEntity).toList();
+        return variants.stream().map(variantMapper::fromEntity).toList();
     }
 
     public ProductVariantResponse getVariantById(Long variantId) {
         ProductVariant variant = findVariantOrThrow(variantId);
-        return ProductVariantResponse.fromEntity(variant);
+        return variantMapper.fromEntity(variant);
     }
 
     /**
@@ -69,6 +59,7 @@ public class ProductVariantService {
      */
     public ProductVariantResponse updateVariant(Long variantId, UpdateProductVariantRequest request) {
         ProductVariant variant = findVariantOrThrow(variantId);
+        variantMapper.updateEntity(request,variant);
 
         String newSku = request.getSku();
         if (CheckData.checkIsNotNull(newSku) && !newSku.equals(variant.getSku())) {
@@ -91,12 +82,7 @@ public class ProductVariantService {
             variant.setSize(size);
             variant.setColor(color);
         }
-
-        if (CheckData.checkIsNotNull(request.getImageUrl())) variant.setImageUrl(request.getImageUrl());
-        if (CheckData.checkIsNotNull(request.getStock())) variant.setStock(request.getStock());
-        if (CheckData.checkIsNotNull(request.getPrice())) variant.setPrice(request.getPrice());
-
-        return ProductVariantResponse.fromEntity(variantRepository.save(variant));
+        return variantMapper.fromEntity(variantRepository.save(variant));
     }
 
     public void deleteVariant(Long variantId) {

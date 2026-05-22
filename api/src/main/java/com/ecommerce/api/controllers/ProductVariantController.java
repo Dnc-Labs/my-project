@@ -4,6 +4,8 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ecommerce.api.dto.request.CreateProductVariantRequest;
 import com.ecommerce.api.dto.request.UpdateProductVariantRequest;
 import com.ecommerce.api.dto.response.BaseResponse;
@@ -34,13 +35,10 @@ import com.ecommerce.api.services.ProductVariantService;
  * Mỗi method khai báo path đầy đủ.
  */
 @RestController
+@RequiredArgsConstructor
 public class ProductVariantController {
 
     private final ProductVariantService variantService;
-
-    public ProductVariantController(ProductVariantService variantService) {
-        this.variantService = variantService;
-    }
 
     @PostMapping("/api/products/{productId}/variants")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('SELLER') and @productSecurity.isOwner(#productId, authentication))")

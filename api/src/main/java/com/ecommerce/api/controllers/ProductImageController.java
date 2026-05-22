@@ -2,6 +2,8 @@ package com.ecommerce.api.controllers;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +32,10 @@ import com.ecommerce.api.services.ProductImageService;
  */
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class ProductImageController {
 
     private final ProductImageService imageService;
-
-    public ProductImageController(ProductImageService imageService) {
-        this.imageService = imageService;
-    }
 
     @PostMapping(value = "/products/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN') or (hasRole('SELLER') and @productSecurity.isOwner(#productId, authentication))")
