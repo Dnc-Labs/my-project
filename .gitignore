@@ -16,6 +16,9 @@ uploads/
 # Personal scratch notes
 note.txt
 
+# Local scripts (không commit vào git)
+scripts/
+
 # IDE
 *.swp
 *.swo
