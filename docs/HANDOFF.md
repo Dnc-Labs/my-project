@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-22
+**Cập nhật lần cuối:** 2026-05-23
 
 ---
 
@@ -22,7 +22,8 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
-- ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** (vừa xong) — `docs/3.2.5-refactor-product-module.md`
+- ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** — `docs/3.2.5-refactor-product-module.md`
+- ✅ **Test E2E toàn bộ refactor** (vừa xong) — Postman collection `postman/ecommerce-api.postman_collection.json`. Đã pass tất cả 8 module trong collection
 - ✅ **3.2.5 Phần 3: Refactor module Category** — `docs/3.2.5-refactor-category-module.md`
 - ✅ **3.2.5 Phần 2: Refactor module User** — `docs/3.2.5-refactor-user-module.md`
 - ✅ **3.2.5 Phần 1: Setup Lombok + MapStruct** — `docs/3.2.5-lombok-mapstruct-setup.md`
@@ -79,6 +80,11 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 - Defensive NPE check rẻ thì nên làm (`getCategory() == null || !... .equals(...)`)
 - Naming convention nhất quán cả mapper + repo: `productVariantMapper` ↔ `productVariantRepository` (không mix rút gọn)
 - Build mapper xong PHẢI `./mvnw clean compile`, đừng tin Maven cache
+
+*Từ test E2E (sau khi xong refactor):*
+- Field `*Id` ở response (vd `productId`, `sellerId`) mà entity có object → BẮT BUỘC `@Mapping(target = "xxxId", source = "xxx.id")`, MapStruct không tự match
+- Bug `children/images/variants = null` ở response sau `create` → fix 2 layer: init entity field `= new ArrayList<>()` + mapper `@BeanMapping(SET_TO_DEFAULT)`. Default `= Collections.emptyList()` ở DTO KHÔNG cứu được vì MapStruct override bằng setter
+- Quick fix `JwtAuthenticationEntryPoint` đã apply tạm để test pass (response 401 JSON consistent thay vì 403 plain). Cleanup session sẽ làm bài bản + thêm `AccessDeniedHandler`
 
 ---
 

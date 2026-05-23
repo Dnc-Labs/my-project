@@ -1,0 +1,692 @@
+{
+  "info": {
+    "_postman_id": "ecommerce-api-3-2-5",
+    "name": "E-commerce API (Refactor 3.2.5)",
+    "description": "Test flow E2E sau khi refactor module User + Category + Product + Variant + Image sang Lombok + MapStruct.\n\n## Cách dùng\n1. Setup MySQL chạy port 3309 + app chạy port 8080\n2. Chạy 2 request trong folder **0. Setup**: Register Admin → Register Seller\n3. **QUAN TRỌNG**: Vào MySQL chạy SQL update role (xem mô tả của request `Register Admin`)\n4. Chạy 2 request trong folder **1. Auth**: Login Admin → Login Seller (token auto lưu)\n5. Chạy các module theo thứ tự: Category → Product → Variant → Image\n6. Mỗi request `Create *` tự lưu id vào variable để request sau dùng\n\n## Variables auto-saved\n- `adminToken`, `sellerToken` (từ Login)\n- `categoryRootId`, `categoryChildId`, `categoryGrandchildId` (từ Create Category)\n- `productId` (từ Create Product)\n- `variantId` (từ Create Variant)\n- `imageId` (từ Upload Image)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "adminEmail", "value": "admin@test.com", "type": "string" },
+    { "key": "adminPassword", "value": "Admin@123", "type": "string" },
+    { "key": "sellerEmail", "value": "seller@test.com", "type": "string" },
+    { "key": "sellerPassword", "value": "Seller@123", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "sellerToken", "value": "", "type": "string" },
+    { "key": "categoryRootId", "value": "", "type": "string" },
+    { "key": "categoryChildId", "value": "", "type": "string" },
+    { "key": "categoryGrandchildId", "value": "", "type": "string" },
+    { "key": "productId", "value": "", "type": "string" },
+    { "key": "variantId", "value": "", "type": "string" },
+    { "key": "imageId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. Setup (Register)",
+      "description": "Tạo 2 user. SAU KHI tạo xong, BẮT BUỘC chạy SQL sau trong MySQL:\n\n```sql\nUSE ecommerce_db;\nUPDATE users SET role = 'ADMIN'  WHERE email = 'admin@test.com';\nUPDATE users SET role = 'SELLER' WHERE email = 'seller@test.com';\n```\n\nLý do: API register tạo user với role mặc định CUSTOMER. Project chưa có admin endpoint để promote role.",
+      "item": [
+        {
+          "name": "Register Admin candidate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"fullName\": \"Admin Test\",\n  \"phone\": \"0900000001\",\n  \"address\": \"Hà Nội\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "Register Seller candidate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\",\n  \"fullName\": \"Seller Test\",\n  \"phone\": \"0900000002\",\n  \"address\": \"TP.HCM\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "description": "Login 2 user → auto lưu accessToken vào collection variable.",
+      "item": [
+        {
+          "name": "Login Admin (auto save adminToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('adminToken', res.data.accessToken);",
+                  "  console.log('✓ adminToken saved');",
+                  "} else {",
+                  "  console.error('✗ accessToken not found in response');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Login Seller (auto save sellerToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('sellerToken', res.data.accessToken);",
+                  "  console.log('✓ sellerToken saved');",
+                  "} else {",
+                  "  console.error('✗ accessToken not found in response');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User",
+      "item": [
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "1"] }
+          }
+        },
+        {
+          "name": "Update User (partial)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Admin Test Updated\",\n  \"phone\": \"0911111111\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "1"] }
+          },
+          "description": "Verify: name+phone đổi, các field khác (address, email) GIỮ NGUYÊN (mapper @BeanMapping IGNORE)."
+        }
+      ]
+    },
+    {
+      "name": "3. Category",
+      "description": "Test refactor Category — verify MapStruct tự đệ quy cho tree.",
+      "item": [
+        {
+          "name": "Create Root Category (save categoryRootId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('categoryRootId', res.data.id);",
+                  "  console.log('✓ categoryRootId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Thời trang\",\n  \"slug\": \"thoi-trang\",\n  \"description\": \"Danh mục thời trang\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          }
+        },
+        {
+          "name": "Create Child Category (save categoryChildId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('categoryChildId', res.data.id);",
+                  "  console.log('✓ categoryChildId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo nam\",\n  \"slug\": \"ao-nam\",\n  \"description\": \"Áo dành cho nam\",\n  \"parentId\": {{categoryRootId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          }
+        },
+        {
+          "name": "Create Grandchild Category (save categoryGrandchildId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('categoryGrandchildId', res.data.id);",
+                  "  console.log('✓ categoryGrandchildId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo thun nam\",\n  \"slug\": \"ao-thun-nam\",\n  \"description\": \"Áo thun cho nam\",\n  \"parentId\": {{categoryChildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          }
+        },
+        {
+          "name": "Get All Categories (verify tree đệ quy)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          },
+          "description": "Verify: response chỉ trả root categories, mỗi root có children lồng nhau 3 cấp. Chứng minh MapStruct auto-recursive hoạt động."
+        },
+        {
+          "name": "Get Category by ID (root)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/{{categoryRootId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryRootId}}"] }
+          }
+        },
+        {
+          "name": "Update Category (partial)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Cập nhật mô tả thời trang\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories/{{categoryRootId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryRootId}}"] }
+          },
+          "description": "Verify: chỉ description đổi, name/slug GIỮ NGUYÊN."
+        },
+        {
+          "name": "[ERROR TEST] Create Duplicate Slug",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo nam khác\",\n  \"slug\": \"ao-nam\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] }
+          },
+          "description": "Expect: 409 Conflict — Slug already exists (DuplicateResource)."
+        },
+        {
+          "name": "[BUG DEMO] Set Descendant as Parent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentId\": {{categoryGrandchildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories/{{categoryRootId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryRootId}}"] }
+          },
+          "description": "⚠️ Bug đã defer cleanup session: circular check chỉ 1 cấp.\n\nSet root làm con của cháu nó → tạo cycle. Sau request này, GET /api/categories sẽ StackOverflowError.\n\n⚠️ KHÔNG CHẠY trừ khi muốn demo bug. Sau khi chạy phải xoá DB hoặc revert thủ công."
+        }
+      ]
+    },
+    {
+      "name": "4. Product",
+      "description": "Test refactor Product — verify nested mapping (categoryName, sellerName) + primaryImageUrl.",
+      "item": [
+        {
+          "name": "Create Product (save productId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('productId', res.data.id);",
+                  "  console.log('✓ productId = ' + res.data.id);",
+                  "  console.log('  categoryName = ' + res.data.categoryName);",
+                  "  console.log('  sellerName = ' + res.data.sellerName);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo thun trắng basic\",\n  \"slug\": \"ao-thun-trang-basic\",\n  \"sku\": \"TSHIRT-W-001\",\n  \"price\": 199000,\n  \"description\": \"Áo thun cotton 100%, form rộng\",\n  \"stock\": 100,\n  \"categoryId\": {{categoryGrandchildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          },
+          "description": "Verify response:\n- categoryId/categoryName từ category.name (nested mapping)\n- sellerId/sellerName từ seller.fullName (nested mapping)\n- primaryImageUrl = null (chưa upload)\n- images = []"
+        },
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          }
+        },
+        {
+          "name": "Update Product (partial)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo thun trắng basic V2\",\n  \"price\": 229000,\n  \"slug\": \"ao-thun-trang-basic\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          },
+          "description": "Verify: name+price đổi. Slug giữ nguyên không throw (vì service check `!equals(current)` trước)."
+        },
+        {
+          "name": "[ERROR TEST] Create Duplicate SKU",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo khác\",\n  \"slug\": \"ao-khac\",\n  \"sku\": \"TSHIRT-W-001\",\n  \"price\": 100000,\n  \"stock\": 10,\n  \"categoryId\": {{categoryGrandchildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          },
+          "description": "Expect: 409 Conflict — SKU already exists."
+        },
+        {
+          "name": "[FORBIDDEN TEST] Create Product as Admin (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test by Admin\",\n  \"slug\": \"test-by-admin\",\n  \"sku\": \"ADMIN-001\",\n  \"price\": 50000,\n  \"stock\": 5,\n  \"categoryId\": {{categoryGrandchildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          },
+          "description": "@PreAuthorize: hasAnyRole('SELLER', 'ADMIN') → ADMIN ALLOWED.\nLưu ý: seller của product sẽ là Admin (vì lấy từ SecurityContext). Đây là verify pattern senior trong code."
+        }
+      ]
+    },
+    {
+      "name": "5. Product Variant",
+      "description": "Test refactor ProductVariant — verify composite unique (size+color) và pragmatic update.",
+      "item": [
+        {
+          "name": "Create Variant M-Trắng (save variantId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('variantId', res.data.id);",
+                  "  console.log('✓ variantId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"M\",\n  \"color\": \"Trắng\",\n  \"sku\": \"TSHIRT-W-001-M-WH\",\n  \"price\": 199000,\n  \"stock\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "variants"]
+            }
+          }
+        },
+        {
+          "name": "Create Variant L-Trắng",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"L\",\n  \"color\": \"Trắng\",\n  \"sku\": \"TSHIRT-W-001-L-WH\",\n  \"price\": 209000,\n  \"stock\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "variants"]
+            }
+          }
+        },
+        {
+          "name": "Create Variant M-Đen",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"M\",\n  \"color\": \"Đen\",\n  \"sku\": \"TSHIRT-W-001-M-BK\",\n  \"price\": 199000,\n  \"stock\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "variants"]
+            }
+          }
+        },
+        {
+          "name": "Get Variants by Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "variants"]
+            }
+          }
+        },
+        {
+          "name": "Get Variant by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/variants/{{variantId}}", "host": ["{{baseUrl}}"], "path": ["api", "variants", "{{variantId}}"] }
+          }
+        },
+        {
+          "name": "Update Variant (only price+stock)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 219000,\n  \"stock\": 50\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/variants/{{variantId}}", "host": ["{{baseUrl}}"], "path": ["api", "variants", "{{variantId}}"] }
+          },
+          "description": "Verify: price+stock đổi, size/color/sku GIỮ NGUYÊN (mapper ignore + service không touch khi field null)."
+        },
+        {
+          "name": "[ERROR TEST] Duplicate Composite (M-Trắng đã có)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"M\",\n  \"color\": \"Trắng\",\n  \"sku\": \"TSHIRT-W-001-M-WH-DUP\",\n  \"price\": 199000,\n  \"stock\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "variants"]
+            }
+          },
+          "description": "Expect: 409 Conflict — Variant already exists (composite unique product_id+size+color)."
+        }
+      ]
+    },
+    {
+      "name": "6. Product Image",
+      "description": "Test refactor ProductImage — verify primaryImageUrl extract qua MapStruct @Named.\n\n⚠️ Upload Image cần chọn file thật ở field `file` (Body → form-data) khi chạy.",
+      "item": [
+        {
+          "name": "Upload Image #1 (auto primary, save imageId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('imageId', res.data.id);",
+                  "  console.log('✓ imageId = ' + res.data.id);",
+                  "  console.log('  isPrimary = ' + res.data.isPrimary);",
+                  "  console.log('  url = ' + res.data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "images"]
+            }
+          },
+          "description": "Chọn file ảnh (.jpg/.png/.webp). Ảnh đầu tiên auto isPrimary=true."
+        },
+        {
+          "name": "Upload Image #2 (not primary)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "images"]
+            }
+          }
+        },
+        {
+          "name": "Upload Image #3",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "images"]
+            }
+          }
+        },
+        {
+          "name": "Get Images by Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "images"]
+            }
+          }
+        },
+        {
+          "name": "Set Primary Image (image #1)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/images/{{imageId}}/primary", "host": ["{{baseUrl}}"], "path": ["api", "images", "{{imageId}}", "primary"] }
+          },
+          "description": "Idempotent: gọi 2 lần cùng imageId không gây side effect (service check)."
+        },
+        {
+          "name": "Get Product (verify primaryImageUrl correct)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          },
+          "description": "⭐ ĐIỂM VERIFY QUAN TRỌNG NHẤT:\n- primaryImageUrl phải khớp với URL của image vừa set primary\n- images[] đủ 3 ảnh\n- 1 image isPrimary=true, 2 image isPrimary=false\n\n→ Chứng minh @Named extractPrimaryUrl của MapStruct hoạt động."
+        }
+      ]
+    },
+    {
+      "name": "7. Delete Cascade",
+      "description": "Verify cascade ALL: xoá product → variants + images bị xoá theo.",
+      "item": [
+        {
+          "name": "Delete Variant (single)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/variants/{{variantId}}", "host": ["{{baseUrl}}"], "path": ["api", "variants", "{{variantId}}"] }
+          }
+        },
+        {
+          "name": "Delete Image (single)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/images/{{imageId}}", "host": ["{{baseUrl}}"], "path": ["api", "images", "{{imageId}}"] }
+          },
+          "description": "Verify: vừa xoá DB record vừa xoá file trên storage (@Transactional rollback nếu storage fail)."
+        },
+        {
+          "name": "Delete Product (cascade)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          },
+          "description": "Verify: variants + images còn lại cũng bị xoá theo (cascade=ALL trong entity)."
+        },
+        {
+          "name": "Delete Category (grandchild → child → root)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/categories/{{categoryGrandchildId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryGrandchildId}}"] }
+          },
+          "description": "Phải xoá theo thứ tự cháu → con → cha vì service chặn xoá khi còn children."
+        }
+      ]
+    }
+  ]
+}

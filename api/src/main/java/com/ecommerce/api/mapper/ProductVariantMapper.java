@@ -14,6 +14,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper
 public interface ProductVariantMapper {
+    @Mapping(target = "productId", source = "product.id")
     ProductVariantResponse fromEntity(ProductVariant productVariant);
 
     @Mapping(target = "id", ignore = true)

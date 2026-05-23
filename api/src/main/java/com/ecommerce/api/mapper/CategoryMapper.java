@@ -11,7 +11,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper
 public interface CategoryMapper {
-
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT)
     CategoryResponse fromEntity(Category category);
 
     @Mapping(target = "id", ignore = true)
