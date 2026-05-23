@@ -1,6 +1,9 @@
 package com.ecommerce.api.config;
 
 import com.ecommerce.api.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,15 +28,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity       // Bật Spring Security
 @EnableMethodSecurity    // Bật @PreAuthorize trên method (phân quyền chi tiết)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
-
-    /**
+     /**
      * Cấu hình SecurityFilterChain — quyết định mọi thứ liên quan đến security.
      */
     @Bean
@@ -47,6 +48,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
                 // 3. Cấu hình endpoint nào public, endpoint nào cần đăng nhập
                 .authorizeHttpRequests(auth -> auth
