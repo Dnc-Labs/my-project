@@ -13,16 +13,20 @@ import com.ecommerce.api.repository.ProductVariantRepository;
 import com.ecommerce.api.utilities.CheckData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductVariantService {
 
     private final ProductVariantRepository variantRepository;
     private final ProductRepository productRepository;
     private final ProductVariantMapper variantMapper;
 
+    @Transactional
     public ProductVariantResponse createVariant(Long productId, CreateProductVariantRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -57,6 +61,7 @@ public class ProductVariantService {
      * Cập nhật variant. Ownership check đã xử lý ở @PreAuthorize controller —
      * service chỉ tập trung vào business logic.
      */
+    @Transactional
     public ProductVariantResponse updateVariant(Long variantId, UpdateProductVariantRequest request) {
         ProductVariant variant = findVariantOrThrow(variantId);
         variantMapper.updateEntity(request,variant);
@@ -85,6 +90,7 @@ public class ProductVariantService {
         return variantMapper.fromEntity(variantRepository.save(variant));
     }
 
+    @Transactional
     public void deleteVariant(Long variantId) {
         ProductVariant variant = findVariantOrThrow(variantId);
         variantRepository.delete(variant);

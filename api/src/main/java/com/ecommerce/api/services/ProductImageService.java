@@ -3,16 +3,11 @@ package com.ecommerce.api.services;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 import com.ecommerce.api.mapper.ProductImageMapper;
-
-import jakarta.transaction.Transactional;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.ecommerce.api.dto.response.ProductImageResponse;
 import com.ecommerce.api.entity.Product;
 import com.ecommerce.api.entity.ProductImage;
@@ -26,6 +21,7 @@ import com.ecommerce.api.storage.UploadResult;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductImageService {
 
     private static final int MAX_IMAGES_PER_PRODUCT = 8;
@@ -44,6 +40,7 @@ public class ProductImageService {
      * Note: nếu storage upload thành công nhưng DB save fail → file rác trên
      * storage. Cần compensating transaction cho production. Giờ skip cho đơn giản.
      */
+    @Transactional
     public ProductImageResponse uploadImage(Long productId, MultipartFile file) {
         Product product = this.productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
                 "Product not found"));

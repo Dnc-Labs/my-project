@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-23
+**Cập nhật lần cuối:** 2026-05-25
 
 ---
 
@@ -22,6 +22,7 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **3.2.6 Cụm 1 + Cụm 2.1: Production cleanup (1 phần)** — `docs/3.2.6-production-cleanup.md`. Fix bug Category circular nông + apply `@Transactional` 6 service + tắt OSIV + E2E test pass. Còn 4 cụm defer (Cụm 2.3 `@Version` đã giảng lý thuyết).
 - ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** — `docs/3.2.5-refactor-product-module.md`
 - ✅ **Test E2E toàn bộ refactor** (vừa xong) — Postman collection `postman/ecommerce-api.postman_collection.json`. Đã pass tất cả 8 module trong collection
 - ✅ **3.2.5 Phần 3: Refactor module Category** — `docs/3.2.5-refactor-category-module.md`
@@ -37,19 +38,16 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 
 ### Đang dang dở — **bắt đầu từ đây khi quay lại**
 
-**Bài 3.2.5 đã KẾT THÚC** — toàn bộ 4 module (setup, User, Category, Product+Variant+Image) đã refactor sang Lombok + MapStruct.
+**Bài 3.2.6 cleanup session làm 1 phần** — Cụm 1 (Category circular) + Cụm 2.1 (`@Transactional` toàn service + tắt OSIV) đã xong. Còn 4 cụm DEFER (làm lúc nào cũng được, không bắt buộc trước 3.3).
 
-**Tiếp theo: BUỔI CLEANUP CHUYÊN SÂU** (đã chốt từ trước, không phải bài ROADMAP).
+**Tiếp theo: 3.3 — Tìm kiếm & Lọc sản phẩm** (theo ROADMAP).
 
-Đây là buổi hardening codebase lên production-grade trước khi sang bài 3.3. Backlog đầy đủ ở memory `project-production-cleanup-session`. Top priorities:
-- `@Transactional` ở mọi service (User, Category, Product, ProductVariant, ProductImage)
-- `@Version` optimistic locking cho entity sửa được
-- Auditing (`@CreationTimestamp` / `@UpdateTimestamp` hoặc Spring Data JPA Auditing với `BaseEntity`)
-- Fix bug **circular check Category nông** (đang chỉ check 1 cấp con, cần recursive)
-- Convert `RuntimeException` → `BadRequestException` / `ConflictException` / `BusinessRuleException`
-- `@AuthenticationPrincipal` thay cho `SecurityContextHolder` truy xuất thủ công ở `ProductService.createProduct`
-- Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB lifecycle)
-- TOCTOU race ở các chỗ `existsByX` + `save` ở 2 transaction tách biệt
+**Backlog cleanup còn lại** (memory `project-production-cleanup-session`):
+- **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng exception handler `ObjectOptimisticLockingFailureException` → 409.
+- **Cụm 2.4** — TOCTOU race: catch `DataIntegrityViolationException` → `DuplicateResource` ở `GlobalExceptionHandler`
+- **Cụm 3** — `BaseEntity` + JPA Auditing (`@CreatedDate`/`@LastModifiedDate`/`@CreatedBy`/`@LastModifiedBy`) + `@Slf4j` audit logging
+- **Cụm 4** — `JwtAuthenticationEntryPoint` + `AccessDeniedHandler` bài bản + `@AuthenticationPrincipal` thay `SecurityContextHolder` ở `ProductService.createProduct` (Cụm 4 1 phần đã làm cho `CategoryService` 3 chỗ `RuntimeException` → `BusinessRuleException`)
+- **Cụm 5** — Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB) + tách long-running I/O ra khỏi `@Transactional` (pattern store-then-record)
 
 **Pattern áp dụng (3 module đã làm theo, để tham khảo khi xử lý bài sau):**
 - Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có quan hệ)
@@ -86,6 +84,16 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 - Bug `children/images/variants = null` ở response sau `create` → fix 2 layer: init entity field `= new ArrayList<>()` + mapper `@BeanMapping(SET_TO_DEFAULT)`. Default `= Collections.emptyList()` ở DTO KHÔNG cứu được vì MapStruct override bằng setter
 - Quick fix `JwtAuthenticationEntryPoint` đã apply tạm để test pass (response 401 JSON consistent thay vì 403 plain). Cleanup session sẽ làm bài bản + thêm `AccessDeniedHandler`
 
+*Từ Cụm 1 + 2.1 (cleanup session 2026-05-25):*
+- Pattern `@Transactional` chuẩn: class-level `@Transactional(readOnly = true)` default + override `@Transactional` cho write method. Sau đó tắt OSIV `spring.jpa.open-in-view: false` để verify
+- Import phải là `org.springframework.transaction.annotation.Transactional` (KHÔNG dùng `jakarta.transaction.Transactional` JTA — hạn chế feature)
+- Pattern senior `delete(entity)` thay `deleteById(id)` khi đã có entity managed → 1 SELECT thay 2
+- `setPrimary` ở `ProductImageService` là demo đẹp nhất của dirty checking — KHÔNG gọi `save()`, để Hibernate auto flush 2 entity
+- Method walk-up O(H) đẹp hơn walk-down O(N) cho cây rộng-nông như category e-commerce — luôn cân search space khi duyệt graph
+- Helper method phải **complete trong specification của nó** — không phụ thuộc caller pre-check (vd `isAncestorOf` phải tự cover self-parent case)
+- Defense in depth: fix logic chặn bug mới + circuit breaker (depth limit) chặn bug cũ + optimistic locking chặn race
+- Optimistic vs Pessimistic Lock là **khái niệm GENERAL CS / concurrency**, có ở mọi ORM/DB/distributed system (Sequelize `version: true` y hệt JPA `@Version`)
+
 ---
 
 ## 3. Bước tiếp theo cụ thể (action items)
@@ -99,7 +107,7 @@ Hôm nay bắt đầu BUỔI CLEANUP CHUYÊN SÂU (production-grade hardening)
 trước khi sang bài 3.3. Đọc memory project-production-cleanup-session để xem backlog.
 ```
 
-**Sau cleanup session:** sang **3.3 — Tìm kiếm & Lọc sản phẩm** (search, filter, `Pageable`, có thể cả Elasticsearch).
+**Tiếp theo (đã chốt):** sang **3.3 — Tìm kiếm & Lọc sản phẩm** (search, filter, `Pageable`, có thể cả Elasticsearch). 4 cụm cleanup còn lại defer làm sau, không bắt buộc trước 3.3.
 
 ---
 

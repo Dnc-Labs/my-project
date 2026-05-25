@@ -17,12 +17,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
+@Transactional(readOnly = true)
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -34,6 +35,7 @@ public class ProductService {
      * Tạo product — seller lấy từ SecurityContext (user đang login),
      * không lấy từ request để tránh gian lận (seller A giả danh seller B).
      */
+    @Transactional
     public ProductResponse createProduct(CreateProductRequest request) {
         Product product = productMapper.fromRequestDto(request);
 
@@ -78,6 +80,7 @@ public class ProductService {
      * Cập nhật product. Ownership check đã xử lý ở @PreAuthorize controller —
      * service chỉ tập trung vào business logic.
      */
+    @Transactional
     public ProductResponse updateProduct(Long id, UpdateProductRequest request) {
         Product product = this.productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         productMapper.updateEntity(request, product);
@@ -106,8 +109,10 @@ public class ProductService {
         return productMapper.fromEntity(updated);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
-        if(!productRepository.existsById(id)) throw new ResourceNotFoundException("Product not found");
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        productRepository.delete(product);
     }
 }

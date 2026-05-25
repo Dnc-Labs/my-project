@@ -11,17 +11,20 @@ import com.ecommerce.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
+    @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         boolean existUser = userRepository.existsByEmail(request.getEmail());
         if (existUser) throw new DuplicateResource("Email is already registered");
@@ -38,6 +41,7 @@ public class UserService {
         return userMapper.fromEntity(user);
     }
 
+    @Transactional
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userMapper.updateEntity(request, user);
