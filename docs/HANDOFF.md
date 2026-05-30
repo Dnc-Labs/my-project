@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-25
+**Cập nhật lần cuối:** 2026-05-31
 
 ---
 
@@ -22,6 +22,7 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **3.3.1 → 3.3.3: Pagination + Search + Filter động** — `docs/3.3-search-filter-pagination.md`. Pageable/Sort foundation + `PageResponse<T>` (fix warning PageImpl) + `@Query` search keyword + JPA Specification filter động (category/price/status) + `@BatchSize` chống N+1. Build pass, đã test E2E. Còn **3.3.4 Elasticsearch** chưa làm.
 - ✅ **3.2.6 Cụm 1 + Cụm 2.1: Production cleanup (1 phần)** — `docs/3.2.6-production-cleanup.md`. Fix bug Category circular nông + apply `@Transactional` 6 service + tắt OSIV + E2E test pass. Còn 4 cụm defer (Cụm 2.3 `@Version` đã giảng lý thuyết).
 - ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** — `docs/3.2.5-refactor-product-module.md`
 - ✅ **Test E2E toàn bộ refactor** (vừa xong) — Postman collection `postman/ecommerce-api.postman_collection.json`. Đã pass tất cả 8 module trong collection
@@ -38,9 +39,9 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 
 ### Đang dang dở — **bắt đầu từ đây khi quay lại**
 
-**Bài 3.2.6 cleanup session làm 1 phần** — Cụm 1 (Category circular) + Cụm 2.1 (`@Transactional` toàn service + tắt OSIV) đã xong. Còn 4 cụm DEFER (làm lúc nào cũng được, không bắt buộc trước 3.3).
+**Bài 3.3 làm xong 3/4 phần** — 3.3.1 (Pageable) + 3.3.2 (search `@Query`) + 3.3.3 (filter Specification) đã xong + test E2E. **Tiếp theo: 3.3.4 — Elasticsearch full-text search** (dựng ES container, `spring-data-elasticsearch`, `ProductDocument`, đồng bộ DB ↔ ES, inverted index, analyzer; chuyển search chính từ SQL LIKE sang ES).
 
-**Tiếp theo: 3.3 — Tìm kiếm & Lọc sản phẩm** (theo ROADMAP).
+**Backlog cleanup 3.2.6** vẫn còn 4 cụm DEFER (xem dưới) — không bắt buộc trước 3.3.4.
 
 **Backlog cleanup còn lại** (memory `project-production-cleanup-session`):
 - **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng exception handler `ObjectOptimisticLockingFailureException` → 409.

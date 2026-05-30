@@ -1,7 +1,9 @@
 package com.ecommerce.api.services;
 
 import com.ecommerce.api.dto.request.CreateProductRequest;
+import com.ecommerce.api.dto.request.ProductFilterRequest;
 import com.ecommerce.api.dto.request.UpdateProductRequest;
+import com.ecommerce.api.dto.response.PageResponse;
 import com.ecommerce.api.dto.response.ProductResponse;
 import com.ecommerce.api.entity.Category;
 import com.ecommerce.api.entity.Product;
@@ -12,18 +14,23 @@ import com.ecommerce.api.mapper.ProductMapper;
 import com.ecommerce.api.repository.CategoryRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.repository.UserRepository;
+import com.ecommerce.api.specification.ProductSpecification;
 import com.ecommerce.api.utilities.CheckData;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -66,9 +73,19 @@ public class ProductService {
         return productMapper.fromEntity(savedProduct);
     }
 
-    public List<ProductResponse> getAllProducts() {
-        List<Product> products =  this.productRepository.findAll();
-        return products.stream().map(productMapper::fromEntity).toList();
+    public PageResponse<ProductResponse> getAllProducts(ProductFilterRequest filter, Pageable pageable) {
+        // Build Specification động: chỉ filter nào user thực sự truyền mới vào WHERE,
+        // giúp DB optimizer chọn index tốt (khác @Query "IS NULL OR" làm optimizer mù).
+        // Specification immutable → BẮT BUỘC gán lại spec = spec.and(...).
+        Specification<Product> spec = Specification.unrestricted();
+        if (CheckData.checkIsNotNull(filter.getKeyword()))    spec = spec.and(ProductSpecification.hasKeyword(filter.getKeyword()));
+        if (CheckData.checkIsNotNull(filter.getCategoryId())) spec = spec.and(ProductSpecification.hasCategory(filter.getCategoryId()));
+        if (CheckData.checkIsNotNull(filter.getMinPrice()))   spec = spec.and(ProductSpecification.priceGoe(filter.getMinPrice()));
+        if (CheckData.checkIsNotNull(filter.getMaxPrice()))   spec = spec.and(ProductSpecification.priceLoe(filter.getMaxPrice()));
+        if (CheckData.checkIsNotNull(filter.getStatus()))     spec = spec.and(ProductSpecification.hasStatus(filter.getStatus()));
+
+        Page<ProductResponse> products = productRepository.findAll(spec, pageable).map(productMapper::fromEntity);
+        return PageResponse.from(products);
     }
 
     public ProductResponse getProductById(Long id) {

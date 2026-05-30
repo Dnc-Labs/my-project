@@ -1,19 +1,19 @@
 package com.ecommerce.api.controllers;
 
 import com.ecommerce.api.dto.request.CreateProductRequest;
+import com.ecommerce.api.dto.request.ProductFilterRequest;
 import com.ecommerce.api.dto.request.UpdateProductRequest;
 import com.ecommerce.api.dto.response.BaseResponse;
+import com.ecommerce.api.dto.response.PageResponse;
 import com.ecommerce.api.dto.response.ProductResponse;
 import com.ecommerce.api.services.ProductService;
 import jakarta.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -30,9 +30,14 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<ProductResponse>>> getAll() {
-        List<ProductResponse> productResponses = this.productService.getAllProducts();
-        return ResponseEntity.ok(BaseResponse.success(productResponses));
+    public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
+            // Spring tự bind ?keyword=...&categoryId=...&minPrice=... vào field của filter
+            // (không cần @RequestParam — object non-body được xử lý qua @ModelAttribute ngầm).
+            ProductFilterRequest filter,
+            Pageable pageable
+    ) {
+        PageResponse<ProductResponse> pageResponse = productService.getAllProducts(filter, pageable);
+        return ResponseEntity.ok(BaseResponse.success(pageResponse));
     }
 
     @GetMapping("/{id}")

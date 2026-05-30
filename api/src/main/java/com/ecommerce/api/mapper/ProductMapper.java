@@ -22,7 +22,7 @@ public interface ProductMapper {
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "sellerId", source = "seller.id")
     @Mapping(target = "sellerName", source = "seller.fullName")
-    @Mapping(source = "images", target = "primaryImageUrl", qualifiedByName = "extractPrimaryUrl")
+    @Mapping(target = "primaryImageUrl", source = "images", qualifiedByName = "extractPrimaryUrl")
     ProductResponse fromEntity(Product product);
 
     @Mapping(target = "id", ignore = true)

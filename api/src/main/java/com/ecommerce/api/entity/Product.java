@@ -4,6 +4,7 @@ import com.ecommerce.api.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -54,6 +55,10 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> productVariants = new ArrayList<>();
 
+    // @BatchSize: khi list nhiều product, Hibernate gom việc load images của 20 product
+    // thành 1 query "WHERE product_id IN (...)" thay vì N query lẻ → chống N+1.
+    // KHÔNG dùng JOIN FETCH ở đây vì JOIN collection + Pageable làm sai pagination.
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     private List<ProductImage> images = new ArrayList<>();
 }

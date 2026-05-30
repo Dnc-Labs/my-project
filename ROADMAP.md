@@ -69,9 +69,9 @@
 - [ ] Upload **product images** (lưu file hoặc cloud storage)
 
 ### 3.3 - Tìm kiếm & Lọc sản phẩm
-- [ ] Tìm kiếm theo tên, mô tả
-- [ ] Lọc theo category, khoảng giá, rating
-- [ ] **Pagination** và **sorting** với `Pageable`
+- [x] Tìm kiếm theo tên, mô tả
+- [x] Lọc theo category, khoảng giá (rating defer — chờ Review entity ở 6.1)
+- [x] **Pagination** và **sorting** với `Pageable`
 - [ ] (Nâng cao) Tích hợp **Elasticsearch** cho full-text search
 
 ---

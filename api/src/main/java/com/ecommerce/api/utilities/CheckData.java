@@ -1,5 +1,6 @@
 package com.ecommerce.api.utilities;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class CheckData {
