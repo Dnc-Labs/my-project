@@ -17,6 +17,10 @@ spring:
       enabled: true
       max-file-size: 5MB        # 1 file tối đa 5MB
       max-request-size: 25MB    # tổng request (multi-file) tối đa 25MB
+  elasticsearch:
+    uris: http://localhost:9200   # ES REST endpoint (single-node dev)
+    connection-timeout: 5s
+    socket-timeout: 30s
 app:
   name: my-app
   version: "1.0"

@@ -39,9 +39,13 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 
 ### Đang dang dở — **bắt đầu từ đây khi quay lại**
 
-**Bài 3.3 làm xong 3/4 phần** — 3.3.1 (Pageable) + 3.3.2 (search `@Query`) + 3.3.3 (filter Specification) đã xong + test E2E. **Tiếp theo: 3.3.4 — Elasticsearch full-text search** (dựng ES container, `spring-data-elasticsearch`, `ProductDocument`, đồng bộ DB ↔ ES, inverted index, analyzer; chuyển search chính từ SQL LIKE sang ES).
+**Bài 3.3 làm xong 3/4 phần** — 3.3.1 (Pageable) + 3.3.2 (search `@Query`) + 3.3.3 (filter Specification) đã xong + test E2E + commit `84c2954`.
 
-**Backlog cleanup 3.2.6** vẫn còn 4 cụm DEFER (xem dưới) — không bắt buộc trước 3.3.4.
+**3.3.4 Elasticsearch — DEFER (đang dang dở):** đã giảng xong lý thuyết + chốt kiến trúc + **dựng hạ tầng** (docker ES+Kibana 8.15.3, dependency `spring-boot-starter-data-elasticsearch`, config `application.yaml`). **Phần code Java CHƯA làm** (Document/Repository/event-sync/search endpoint). Toàn bộ lý thuyết + Q&A + 6 bước code còn lại lưu ở **`docs/3.3.4-elasticsearch.md`**. Khi quay lại: `docker compose up -d elasticsearch kibana` rồi đọc file docs đó.
+
+**Tiếp theo (đề xuất):** có thể sang **3.4 / Giai đoạn 4 (Cart/Order)** theo ROADMAP, hoặc quay lại làm nốt 3.3.4 ES, hoặc dọn backlog cleanup 3.2.6 — tuỳ ưu tiên.
+
+**Backlog cleanup 3.2.6** vẫn còn 4 cụm DEFER (xem dưới).
 
 **Backlog cleanup còn lại** (memory `project-production-cleanup-session`):
 - **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng exception handler `ObjectOptimisticLockingFailureException` → 409.

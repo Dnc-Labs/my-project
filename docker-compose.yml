@@ -10,5 +10,40 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  # Elasticsearch single-node cho dev/học.
+  # xpack.security.enabled=false → tắt auth + TLS để kết nối http://localhost:9200
+  # đơn giản (KHÔNG dùng cấu hình này cho production — production phải bật security).
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: ecommerce-elasticsearch
+    ports:
+      - "9200:9200"   # REST API
+      - "9300:9300"   # transport (node-to-node, không dùng ở single-node nhưng expose cho đủ)
+    environment:
+      - discovery.type=single-node          # 1 node, bỏ qua bầu cử cluster
+      - xpack.security.enabled=false        # tắt bảo mật cho dev
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"    # giới hạn heap 512MB (mặc định ES ăn RAM rất nhiều)
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      # Kibana chỉ start khi ES đã sẵn sàng (tránh race lúc boot)
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # Kibana — UI debug: xem index, chạy Query DSL (Dev Tools), quan sát mapping.
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    container_name: ecommerce-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200   # tên service trong cùng docker network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
 volumes:
   mysql_data:
+  es_data:
