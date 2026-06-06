@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,8 +13,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "products")
-public class Product {
-
+public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,9 +38,6 @@ public class Product {
 
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.ACTIVE;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)

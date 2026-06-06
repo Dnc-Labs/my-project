@@ -35,6 +35,8 @@ public interface ProductMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "slug", ignore = true)
     @Mapping(target = "sku", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
     Product fromRequestDto(CreateProductRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -46,7 +48,8 @@ public interface ProductMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "slug", ignore = true)
     @Mapping(target = "sku", ignore = true)
-
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 

@@ -1,6 +1,5 @@
 package com.ecommerce.api.services;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import com.ecommerce.api.mapper.ProductImageMapper;
@@ -55,7 +54,6 @@ public class ProductImageService {
         image.setOriginalName(file.getOriginalFilename());
         image.setProduct(product);
         image.setIsPrimary(cntImagesPerProduct == 0);
-        image.setCreatedAt(LocalDateTime.now());
         ProductImage saved = imageRepository.save(image);
         return imageMapper.fromEntity(saved);
     }

@@ -1,8 +1,6 @@
 package com.ecommerce.api.entity;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,10 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
 import com.ecommerce.api.enums.Role;
 import com.ecommerce.api.enums.Status;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,7 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
+public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,8 +47,6 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     // - orders: 1 User có nhiều Order (@OneToMany)
     // - cart: 1 User có 1 Cart (@OneToOne)

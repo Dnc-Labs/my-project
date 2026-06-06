@@ -22,7 +22,7 @@ import java.math.BigDecimal;
         columnNames = {"product_id", "size", "color"}
     )
 )
-public class ProductVariant {
+public class ProductVariant extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

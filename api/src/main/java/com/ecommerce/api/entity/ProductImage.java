@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 /**
  * ProductImage — 1 ảnh thuộc về 1 Product. Mỗi product có nhiều ảnh.
  *
@@ -21,7 +19,7 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "product_images")
-public class ProductImage {
+public class ProductImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +39,4 @@ public class ProductImage {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-
-    private LocalDateTime createdAt;
 }

@@ -13,8 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,7 +29,6 @@ public class UserService {
         User user = userMapper.fromRequestDto(request);
         // hash password sau khi map vì mapper cố ý ignore field password
         user.setPassword(this.passwordEncoder.encode(request.getPassword()));
-        user.setCreatedAt(LocalDateTime.now());
         User createdUser = this.userRepository.save(user);
         return userMapper.fromEntity(createdUser);
     }
@@ -45,7 +42,6 @@ public class UserService {
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = this.userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userMapper.updateEntity(request, user);
-        user.setUpdatedAt(LocalDateTime.now());
         User userUpdate = this.userRepository.save(user);
         return userMapper.fromEntity(userUpdate);
     }

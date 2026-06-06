@@ -68,7 +68,7 @@ public class ProductService {
             Category category = this.categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
             product.setCategory(category);
         }
-        product.setCreatedAt(LocalDateTime.now());
+
         Product savedProduct = this.productRepository.save(product);
         return productMapper.fromEntity(savedProduct);
     }
@@ -121,7 +121,6 @@ public class ProductService {
             Category category = this.categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
             product.setCategory(category);
         }
-        product.setUpdatedAt(LocalDateTime.now());
         Product updated = this.productRepository.save(product);
         return productMapper.fromEntity(updated);
     }
