@@ -11,6 +11,8 @@ import com.ecommerce.api.mapper.CategoryMapper;
 import com.ecommerce.api.repository.CategoryRepository;
 import com.ecommerce.api.utilities.CheckData;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 @Transactional(readOnly = true)
+@Slf4j
 public class CategoryService {
 
     // Circuit breaker: nếu DB lỡ có cycle (bug cũ hoặc race), walk-up sẽ vô tận.
@@ -32,6 +35,7 @@ public class CategoryService {
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         boolean checkExistsSlug = this.categoryRepository.existsBySlug(request.getSlug());
         if(checkExistsSlug) throw new DuplicateResource("Slug already exists");
+        log.info("Created new category : {}", request.getSlug());
         Category existParent = null;
         if(request.getParentId() != null) {
             existParent = this.categoryRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
@@ -42,6 +46,7 @@ public class CategoryService {
             category.setParent(existParent);
         }
         Category created = this.categoryRepository.save(category);
+        log.info("Category created successfully: id={}", created.getId());
         return categoryMapper.fromEntity(created);
     }
 
@@ -57,6 +62,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
+        log.info("Update category with slug: {}", request.getSlug());
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         categoryMapper.updateEntity(request, category);
         String slugUpdate = request.getSlug();
@@ -75,6 +81,7 @@ public class CategoryService {
             }
             category.setParent(parentCategory);
         }
+        log.info("Category update successfully: id={}", id);
         return categoryMapper.fromEntity(this.categoryRepository.save(category));
     }
 
@@ -87,6 +94,7 @@ public class CategoryService {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         if(CheckData.checkIsNotNull(category.getChildren())) throw new BusinessRuleException("Cannot delete category that has children");
         this.categoryRepository.delete(category);
+        log.info("Category delete successfully: id={}", id);
     }
 
     /**

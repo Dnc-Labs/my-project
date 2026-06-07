@@ -44,6 +44,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse createProduct(CreateProductRequest request) {
+        log.info("Created new product : {}", request.getSlug());
         Product product = productMapper.fromRequestDto(request);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -70,6 +71,7 @@ public class ProductService {
         }
 
         Product savedProduct = this.productRepository.save(product);
+        log.info("Product created successfully: id={}", savedProduct.getId());
         return productMapper.fromEntity(savedProduct);
     }
 
@@ -99,6 +101,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse updateProduct(Long id, UpdateProductRequest request) {
+        log.info("Update product : {}", id);
         Product product = this.productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         productMapper.updateEntity(request, product);
         String slug = request.getSlug();
@@ -122,13 +125,18 @@ public class ProductService {
             product.setCategory(category);
         }
         Product updated = this.productRepository.save(product);
+        log.info("Update successfully product : {}", id);
+
         return productMapper.fromEntity(updated);
     }
 
     @Transactional
     public void deleteProduct(Long id) {
+        log.info("Delete product : {}", id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         productRepository.delete(product);
+        log.info("Deleted successfully product : {}", id);
+
     }
 }

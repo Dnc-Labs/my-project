@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import com.ecommerce.api.mapper.ProductImageMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,7 @@ import com.ecommerce.api.storage.UploadResult;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductImageService {
 
     private static final int MAX_IMAGES_PER_PRODUCT = 8;
@@ -41,6 +44,7 @@ public class ProductImageService {
      */
     @Transactional
     public ProductImageResponse uploadImage(Long productId, MultipartFile file) {
+        log.info("Upload image for product : {}", productId);
         Product product = this.productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
                 "Product not found"));
         this.fileValidator.validateImage(file);
@@ -55,6 +59,7 @@ public class ProductImageService {
         image.setProduct(product);
         image.setIsPrimary(cntImagesPerProduct == 0);
         ProductImage saved = imageRepository.save(image);
+        log.info("Upload image successfully for product {} with url {}", productId, result.url());
         return imageMapper.fromEntity(saved);
     }
 
@@ -70,6 +75,7 @@ public class ProductImageService {
      */
     @Transactional
     public ProductImageResponse setPrimary(Long imageId) {
+        log.info("Setting primary image: id={}", imageId);
         ProductImage image = imageRepository.findById(imageId).orElseThrow(() -> new ResourceNotFoundException(
                 "Image not found"));
         Optional<ProductImage> primaryImage = imageRepository.findByProductIdAndIsPrimaryTrue(image.getProduct().getId());
@@ -84,10 +90,12 @@ public class ProductImageService {
 
     @Transactional
     public void deleteImage(Long imageId) {
+        log.info("Deleting image: id={}", imageId);
         ProductImage image = imageRepository.findById(imageId).orElseThrow(() -> new ResourceNotFoundException(
                 "Image not found"));
         String key = image.getStorageKey();
         imageRepository.delete(image);
+        log.info("Image deleted successfully: id={}", imageId);
         // Note: storage.delete() throws RuntimeException nếu fail → @Transactional rollback DB.
         // An toàn cho local filesystem (atomic). Khi migrate sang S3, cần đổi sang
         // TransactionSynchronization.afterCommit() để tránh broken-link khi network fail.

@@ -12,14 +12,15 @@ import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.repository.ProductVariantRepository;
 import com.ecommerce.api.utilities.CheckData;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductVariantService {
 
     private final ProductVariantRepository variantRepository;
@@ -28,6 +29,7 @@ public class ProductVariantService {
 
     @Transactional
     public ProductVariantResponse createVariant(Long productId, CreateProductVariantRequest request) {
+        log.info("Created new variant for product id {} with SKU {}", productId, request.getSku());
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
@@ -41,6 +43,7 @@ public class ProductVariantService {
         ProductVariant variant = variantMapper.fromRequestDto(request);
         variant.setProduct(product);
         ProductVariant saved = variantRepository.save(variant);
+        log.info("variant created successfully: id={}", saved.getId());
         return variantMapper.fromEntity(saved);
     }
 
@@ -63,6 +66,7 @@ public class ProductVariantService {
      */
     @Transactional
     public ProductVariantResponse updateVariant(Long variantId, UpdateProductVariantRequest request) {
+        log.info("Update variant with id: {}", variantId);
         ProductVariant variant = findVariantOrThrow(variantId);
         variantMapper.updateEntity(request,variant);
 
@@ -94,6 +98,7 @@ public class ProductVariantService {
     public void deleteVariant(Long variantId) {
         ProductVariant variant = findVariantOrThrow(variantId);
         variantRepository.delete(variant);
+        log.info("Variant deleted successfully: id={}", variantId);
     }
 
     private ProductVariant findVariantOrThrow(Long variantId) {
