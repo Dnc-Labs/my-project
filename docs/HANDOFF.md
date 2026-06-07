@@ -48,11 +48,12 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 **Backlog cleanup 3.2.6** vẫn còn 4 cụm DEFER (xem dưới).
 
 **Backlog cleanup còn lại** (memory `project-production-cleanup-session`):
-- **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng exception handler `ObjectOptimisticLockingFailureException` → 409.
-- **Cụm 2.4** — TOCTOU race: catch `DataIntegrityViolationException` → `DuplicateResource` ở `GlobalExceptionHandler`
-- **Cụm 3** — `BaseEntity` + JPA Auditing (`@CreatedDate`/`@LastModifiedDate`/`@CreatedBy`/`@LastModifiedBy`) + `@Slf4j` audit logging
-- **Cụm 4** — `JwtAuthenticationEntryPoint` + `AccessDeniedHandler` bài bản + `@AuthenticationPrincipal` thay `SecurityContextHolder` ở `ProductService.createProduct` (Cụm 4 1 phần đã làm cho `CategoryService` 3 chỗ `RuntimeException` → `BusinessRuleException`)
-- **Cụm 5** — Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB) + tách long-running I/O ra khỏi `@Transactional` (pattern store-then-record)
+- ✅ **Cụm 3 — DONE** — `BaseEntity` + JPA Auditing + `@Slf4j` logging (commit 1669062, 0a6de8a)
+- ✅ **Cụm 4 — DONE** — JwtAccessDeniedHandler 403 JSON + InvalidFileException + xoá 14 file demo + `@AuthenticationPrincipal`/CustomUserDetails/getReferenceById (commit 9fd5d6b, beac5ae, c0a10cd)
+- ⏳ **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng handler `ObjectOptimisticLockingFailureException` → 409.
+- ⏳ **Cụm 2.4** — TOCTOU race: catch `DataIntegrityViolationException` → `DuplicateResource` ở `GlobalExceptionHandler`
+- ⏳ **Cụm 5** — Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB) + tách long-running I/O ra khỏi `@Transactional` (pattern store-then-record)
+- ⏳ **Lặt vặt production-grade:** Flyway/Liquibase thay `ddl-auto:update`; password validation regex; tách ProductListItemResponse vs ProductDetailResponse; InvalidFileException log error→warn (400 là client sai); xoá property `app.name/version/description` thừa trong application.yaml
 
 **Pattern áp dụng (3 module đã làm theo, để tham khảo khi xử lý bài sau):**
 - Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có quan hệ)
