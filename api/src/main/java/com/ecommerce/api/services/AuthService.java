@@ -28,7 +28,7 @@ public class AuthService {
         boolean checkValidPassword = this.passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
         if(!checkValidPassword) throw new InvalidUserOrPassword("Invalid email or password");
 
-        String accessToken = this.jwtTokenProvider.generateAccessToken(loginRequest.getEmail(), user.getRole().toString());
+        String accessToken = this.jwtTokenProvider.generateAccessToken(user.getId(), loginRequest.getEmail(), user.getRole().toString());
         String refreshToken = this.jwtTokenProvider.generateRefreshToken(loginRequest.getEmail());
         return new AuthResponse(accessToken, refreshToken);
     }
@@ -38,7 +38,7 @@ public class AuthService {
         if(!validToken) throw new InvalidToken();
         String email = this.jwtTokenProvider.getEmailFromToken(refreshToken);
         User user = this.userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String accessToken = this.jwtTokenProvider.generateAccessToken(email, user.getRole().toString());
+        String accessToken = this.jwtTokenProvider.generateAccessToken(user.getId(), email, user.getRole().toString());
         return new AuthResponse(accessToken, refreshToken);
     }
 }

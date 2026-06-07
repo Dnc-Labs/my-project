@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
@@ -47,18 +48,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getEmailFromToken(token);
             String role = jwtTokenProvider.getRoleFromToken(token);
+            Long userId = jwtTokenProvider.getUserIdFromToken(token);
 
-            // Tạo Authentication object
-            // Tương đương req.user = { email, role } bên Express
+            CustomUserDetails principal = new CustomUserDetails(userId, email, role);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            email,                                          // principal (ai đang đăng nhập)
-                            null,                                           // credentials (không cần password ở đây)
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role))  // authorities (quyền)
+                            principal,                          // principal = CustomUserDetails (có id để getReferenceById)
+                            null,                               // credentials (JWT không cần password)
+                            principal.getAuthorities()          // authorities — quyền cho hasRole()
                     );
 
             // Đặt vào SecurityContext — từ đây các layer sau đều biết user là ai
-            // Giống req.user trong Express, nhưng là thread-safe (mỗi thread có context riêng)
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

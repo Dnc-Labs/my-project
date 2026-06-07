@@ -34,12 +34,13 @@ public class JwtTokenProvider {
      * Tạo Access Token
      * Payload chứa: subject (email), role, thời gian tạo, thời gian hết hạn
      */
-    public String generateAccessToken(String email, String role) {
+    public String generateAccessToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpiration);
 
         return Jwts.builder()
                 .subject(email)                    // "sub" — ai là chủ token
+                .claim("userId", userId)           // custom claim — id để getReferenceById khỏi query
                 .claim("role", role)               // custom claim — quyền của user
                 .issuedAt(now)                     // "iat" — tạo lúc nào
                 .expiration(expiry)                // "exp" — hết hạn lúc nào
@@ -76,6 +77,14 @@ public class JwtTokenProvider {
      */
     public String getRoleFromToken(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    /**
+     * Lấy userId từ token (claim "userId").
+     * Chỉ access token mới có claim này — refresh token không có.
+     */
+    public Long getUserIdFromToken(String token) {
+        return parseClaims(token).get("userId", Long.class);
     }
 
     /**

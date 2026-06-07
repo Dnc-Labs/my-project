@@ -21,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,18 +36,17 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     /**
-     * Tạo product — seller lấy từ SecurityContext (user đang login),
-     * không lấy từ request để tránh gian lận (seller A giả danh seller B).
+     * Tạo product — sellerId lấy từ token (principal đã xác thực) qua @AuthenticationPrincipal
+     * ở controller, KHÔNG lấy từ request để tránh gian lận (seller A giả danh seller B).
      */
     @Transactional
-    public ProductResponse createProduct(CreateProductRequest request) {
-        log.info("Created new product : {}", request.getSlug());
+    public ProductResponse createProduct(CreateProductRequest request, Long sellerId) {
+        log.info("Creating new product: {}", request.getSlug());
         Product product = productMapper.fromRequestDto(request);
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email =  authentication.getName();
-        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        product.setSeller(user);
+        // getReferenceById: proxy chỉ có id → gắn FK seller_id mà KHÔNG query SELECT users
+        User seller = this.userRepository.getReferenceById(sellerId);
+        product.setSeller(seller);
 
         String slug = request.getSlug();
         boolean checkExistsProductBySlug = this.productRepository.existsBySlug(slug);

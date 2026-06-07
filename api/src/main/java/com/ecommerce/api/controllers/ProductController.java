@@ -6,6 +6,7 @@ import com.ecommerce.api.dto.request.UpdateProductRequest;
 import com.ecommerce.api.dto.response.BaseResponse;
 import com.ecommerce.api.dto.response.PageResponse;
 import com.ecommerce.api.dto.response.ProductResponse;
+import com.ecommerce.api.security.CustomUserDetails;
 import com.ecommerce.api.services.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,8 +26,9 @@ public class ProductController {
 
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @PostMapping
-    public ResponseEntity<BaseResponse<ProductResponse>> create(@Valid @RequestBody CreateProductRequest request){
-        ProductResponse productResponse =  this.productService.createProduct(request);
+    public ResponseEntity<BaseResponse<ProductResponse>> create(@Valid @RequestBody CreateProductRequest request, @AuthenticationPrincipal
+                                                                CustomUserDetails userDetails){
+        ProductResponse productResponse =  this.productService.createProduct(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(productResponse));
     }
 
