@@ -4,9 +4,9 @@ import com.ecommerce.api.entity.Product;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 
 /**
@@ -26,15 +26,10 @@ import java.util.Optional;
  *   khi đổi tên class sau này (refactor an toàn hơn)
  */
 @Component("productSecurity")
+@RequiredArgsConstructor
 public class ProductSecurity {
-
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-
-    public ProductSecurity(ProductRepository productRepository, UserRepository userRepository) {
-        this.productRepository = productRepository;
-        this.userRepository = userRepository;
-    }
 
     /**
      * Kiểm tra user đang login có phải là seller (chủ sở hữu) của product không.

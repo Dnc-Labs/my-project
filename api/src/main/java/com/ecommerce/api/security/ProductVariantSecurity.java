@@ -4,9 +4,9 @@ import com.ecommerce.api.entity.ProductVariant;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.repository.ProductVariantRepository;
 import com.ecommerce.api.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 
 /**
@@ -20,16 +20,11 @@ import java.util.Optional;
  *                  (hasRole('SELLER') and @productVariantSecurity.isOwner(#variantId, authentication))")
  */
 @Component("productVariantSecurity")
+@RequiredArgsConstructor
 public class ProductVariantSecurity {
 
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
-
-    public ProductVariantSecurity(ProductVariantRepository productVariantRepository,
-                                   UserRepository userRepository) {
-        this.productVariantRepository = productVariantRepository;
-        this.userRepository = userRepository;
-    }
 
     /**
      * Check user đang login có phải seller (chủ sở hữu) của product chứa variant không.

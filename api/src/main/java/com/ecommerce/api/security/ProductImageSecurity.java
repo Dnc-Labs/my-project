@@ -2,9 +2,9 @@ package com.ecommerce.api.security;
 
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
 import com.ecommerce.api.entity.ProductImage;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.repository.ProductImageRepository;
@@ -17,15 +17,12 @@ import com.ecommerce.api.repository.UserRepository;
  * Đi qua image.getProduct().getSeller().
  */
 @Component("productImageSecurity")
+@RequiredArgsConstructor
 public class ProductImageSecurity {
 
     private final ProductImageRepository imageRepository;
     private final UserRepository userRepository;
 
-    public ProductImageSecurity(ProductImageRepository imageRepository, UserRepository userRepository) {
-        this.imageRepository = imageRepository;
-        this.userRepository = userRepository;
-    }
 
     /**
      * Check user đang login có phải seller (chủ sở hữu) của product chứa image không.
