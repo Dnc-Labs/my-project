@@ -68,6 +68,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidFileException.class)
     public ResponseEntity<BaseResponse<Void>> handeInvalidFileException(InvalidFileException e) {
+        logger.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.error(e.getMessage()));
     }
 

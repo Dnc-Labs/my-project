@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import com.ecommerce.api.exception.InvalidFileException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +48,7 @@ public class LocalStorageService implements StorageService {
         Path targetFolder = Paths.get(uploadDir, folder);
         String ext = getExtension(file.getOriginalFilename());
 
-        if (ext.isBlank()) throw new RuntimeException("File must have a valid extension");
+        if (ext.isBlank()) throw new InvalidFileException("File must have a valid extension");
 
         String fileName = UUID.randomUUID() + ext;
 
@@ -55,7 +57,7 @@ public class LocalStorageService implements StorageService {
             Files.createDirectories(targetFolder);
             Files.copy(file.getInputStream(), target);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to upload file: " + fileName, e);
+            throw new InvalidFileException("Failed to upload file: " + fileName, e);
         }
 
         String key = folder + "/" + fileName;
