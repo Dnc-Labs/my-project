@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -33,7 +34,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
+    private final AccessDeniedHandler jwtAccessDeniedHandler;
      /**
      * Cấu hình SecurityFilterChain — quyết định mọi thứ liên quan đến security.
      */
@@ -48,8 +49,10 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-
+                .exceptionHandling(ex -> ex
+                                            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                            .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
                 // 3. Cấu hình endpoint nào public, endpoint nào cần đăng nhập
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập không cần token
