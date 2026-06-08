@@ -37,6 +37,7 @@ public interface ProductMapper {
     @Mapping(target = "sku", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Product fromRequestDto(CreateProductRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -50,6 +51,7 @@ public interface ProductMapper {
     @Mapping(target = "sku", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 

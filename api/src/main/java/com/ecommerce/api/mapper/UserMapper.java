@@ -27,6 +27,7 @@ public interface UserMapper {
     @Mapping(target = "cart", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     User fromRequestDto(CreateUserRequest request);
 
     // NullValuePropertyMappingStrategy.IGNORE: partial update — field null trong request không đè entity
@@ -42,5 +43,6 @@ public interface UserMapper {
     @Mapping(target = "cart", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntity(UpdateUserRequest request, @MappingTarget User user);
 }

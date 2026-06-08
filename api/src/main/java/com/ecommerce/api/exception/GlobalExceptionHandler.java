@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -70,6 +71,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BaseResponse<Void>> handeInvalidFileException(InvalidFileException e) {
         logger.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<BaseResponse<Void>> handleObjectOptimisticLockingFailureException(ObjectOptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(BaseResponse.error("This record was modified by someone else. Please reload and try again."));
     }
 
     @ExceptionHandler(Exception.class)

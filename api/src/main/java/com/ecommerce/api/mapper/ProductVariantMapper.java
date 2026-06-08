@@ -23,6 +23,7 @@ public interface ProductVariantMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     ProductVariant fromRequestDto(CreateProductVariantRequest createProductVariantRequest);
 
     @Mapping(target = "id", ignore = true)
@@ -34,6 +35,7 @@ public interface ProductVariantMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateProductVariantRequest request, @MappingTarget ProductVariant productVariant);
 

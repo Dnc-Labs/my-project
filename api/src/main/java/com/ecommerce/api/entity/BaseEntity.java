@@ -2,6 +2,7 @@ package com.ecommerce.api.entity;
 
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Version;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -36,4 +37,7 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     private String updatedBy;
+
+    @Version
+    private Long version;
 }

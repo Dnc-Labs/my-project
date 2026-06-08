@@ -22,6 +22,7 @@ public interface CategoryMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Category fromRequestDto(CreateCategoryRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -32,6 +33,7 @@ public interface CategoryMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateCategoryRequest request, @MappingTarget Category category);
 
