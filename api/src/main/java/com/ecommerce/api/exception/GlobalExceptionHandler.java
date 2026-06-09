@@ -1,9 +1,8 @@
 package com.ecommerce.api.exception;
 
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -24,9 +23,8 @@ import com.ecommerce.api.dto.response.BaseResponse;
  * Nhưng thay vì 1 middleware, Spring cho phép bắt TỪNG loại exception riêng.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<BaseResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BaseResponse.error(e.getMessage()));
@@ -68,8 +66,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidFileException.class)
-    public ResponseEntity<BaseResponse<Void>> handeInvalidFileException(InvalidFileException e) {
-        logger.error(e.getMessage(), e);
+    public ResponseEntity<BaseResponse<Void>> handleInvalidFileException(InvalidFileException e) {
+        // 400 client error (file sai) → warn, không error. Message do mình kiểm soát nên an toàn trả client.
+        log.warn("Invalid file request: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.error(e.getMessage()));
     }
 
@@ -78,9 +77,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(BaseResponse.error("This record was modified by someone else. Please reload and try again."));
     }
 
+    // Lưới an toàn cho TOCTOU race: existsBy có thể lọt khe (2 request đồng thời cùng vượt check)
+    // → DB unique constraint chặn lại → ném DataIntegrityViolationException. Đây là trường hợp dự
+    // kiến được, không phải bug server → warn (không error). Message KHÔNG dùng e.getMessage() vì
+    // lộ chi tiết SQL/tên constraint cho client.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<BaseResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        log.warn("Data integrity violation (possible duplicate/constraint): {}", e.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(BaseResponse.error("A record with the same unique value already exists."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleException(Exception e) {
-        logger.error(e.getMessage(), e);
+        log.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.error("Internal Server Error"));
     }
 }
