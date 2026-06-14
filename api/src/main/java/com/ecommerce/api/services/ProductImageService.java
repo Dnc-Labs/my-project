@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.ecommerce.api.dto.response.ProductImageResponse;
@@ -39,28 +40,63 @@ public class ProductImageService {
     /**
      * Upload ảnh cho product. Ảnh đầu tiên (count == 0) auto trở thành primary.
      *
-     * Note: nếu storage upload thành công nhưng DB save fail → file rác trên
-     * storage. Cần compensating transaction cho production. Giờ skip cho đơn giản.
+     * NOT_SUPPORTED: chạy NGOÀI transaction để KHÔNG giữ DB connection suốt thời gian
+     * upload I/O chậm (5-10s) → tránh connection starvation. imageRepository.save() tự
+     * mở transaction ngắn riêng (Spring Data REQUIRED). Pattern store-then-record: upload
+     * trước, ghi DB sau; nếu DB fail thì đền bù bằng cách xoá file (compensating action).
+     * Image-limit là SOFT limit — chấp nhận race count (không có DB constraint enforce).
      */
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductImageResponse uploadImage(Long productId, MultipartFile file) {
         log.info("Upload image for product : {}", productId);
+
+        // 1. Reads + validate (mỗi read tự auto-commit, không giữ connection lâu)
         Product product = this.productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
                 "Product not found"));
         this.fileValidator.validateImage(file);
         long cntImagesPerProduct = this.imageRepository.countByProductId(productId);
         if (cntImagesPerProduct >= MAX_IMAGES_PER_PRODUCT)
             throw new BusinessRuleException("Product has reached the image limit (max " + MAX_IMAGES_PER_PRODUCT + ")");
+
+        // 2. Upload lên storage — NGOÀI transaction
         UploadResult result = storageService.upload(file, STORAGE_FOLDER);
-        ProductImage image = new ProductImage();
-        image.setStorageKey(result.key());
-        image.setUrl(result.url());
-        image.setOriginalName(file.getOriginalFilename());
-        image.setProduct(product);
-        image.setIsPrimary(cntImagesPerProduct == 0);
-        ProductImage saved = imageRepository.save(image);
-        log.info("Upload image successfully for product {} with url {}", productId, result.url());
-        return imageMapper.fromEntity(saved);
+
+        try {
+            ProductImage productImage = new ProductImage();
+            productImage.setStorageKey(result.key());
+            productImage.setUrl(result.url());
+            productImage.setProduct(product);
+            productImage.setOriginalName(file.getOriginalFilename());
+            productImage.setIsPrimary(cntImagesPerProduct == 0);
+            ProductImage saved = imageRepository.save(productImage);
+            log.info("Upload image successfully for product {} with url {}", productId, result.url());
+            return imageMapper.fromEntity(saved);
+        } catch (Exception e) {
+            // ĐỀN BÙ: xoá file vừa upload (best-effort) rồi rethrow ĐÚNG exception gốc —
+            // giữ nguyên type để GlobalExceptionHandler trả đúng status (vd DataIntegrityViolation → 409).
+            safeDelete(result.key());
+            throw e;
+        }
+    }
+
+    /**
+     * Xoá file storage best-effort khi compensating. KHÔNG ném exception ra ngoài —
+     * lỗi xoá không được che lỗi gốc. Hết retry thì log WARN kèm key để job dọn rác/người
+     * vận hành tìm lại file orphan.
+     */
+    private void safeDelete(String storageKey) {
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                storageService.delete(storageKey);
+                return;
+            } catch (Exception e) {
+                // log cause mỗi lần fail để debug; chưa hết retry thì thử lại
+                log.warn("Compensating delete failed (attempt {}/{}) for key {}: {}",
+                        attempt, maxAttempts, storageKey, e.getMessage());
+            }
+        }
+        log.warn("Orphan file left on storage after {} failed delete attempts: {}", maxAttempts, storageKey);
     }
 
     public List<ProductImageResponse> getImagesByProduct(Long productId) {
