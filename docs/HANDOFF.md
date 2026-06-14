@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-05-31
+**Cập nhật lần cuối:** 2026-06-09
 
 ---
 
@@ -22,8 +22,8 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **3.2.6 Buổi Cleanup Chuyên Sâu — HOÀN THÀNH** (production-grade hardening) — `docs/3.2.6-production-cleanup.md` (11 phần, lý thuyết + Q&A verbatim). Cụm 1 (Category circular) + 2.1 (`@Transactional`+OSIV) + 2.3 (`@Version` optimistic lock) + 2.4 (TOCTOU/`DataIntegrityViolation`→409) + 3 (BaseEntity+Auditing) + 3.6 (`@Slf4j`) + 4 (security exception/#7#8#9) + 5 (compensating tx `uploadImage`). **Buổi cleanup #1 đóng lại**, phần còn lại dời sang **buổi Cleanup #2 ở Giai đoạn 4** (ROADMAP mục 4.0).
 - ✅ **3.3.1 → 3.3.3: Pagination + Search + Filter động** — `docs/3.3-search-filter-pagination.md`. Pageable/Sort foundation + `PageResponse<T>` (fix warning PageImpl) + `@Query` search keyword + JPA Specification filter động (category/price/status) + `@BatchSize` chống N+1. Build pass, đã test E2E. Còn **3.3.4 Elasticsearch** chưa làm.
-- ✅ **3.2.6 Cụm 1 + Cụm 2.1: Production cleanup (1 phần)** — `docs/3.2.6-production-cleanup.md`. Fix bug Category circular nông + apply `@Transactional` 6 service + tắt OSIV + E2E test pass. Còn 4 cụm defer (Cụm 2.3 `@Version` đã giảng lý thuyết).
 - ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** — `docs/3.2.5-refactor-product-module.md`
 - ✅ **Test E2E toàn bộ refactor** (vừa xong) — Postman collection `postman/ecommerce-api.postman_collection.json`. Đã pass tất cả 8 module trong collection
 - ✅ **3.2.5 Phần 3: Refactor module Category** — `docs/3.2.5-refactor-category-module.md`
@@ -43,17 +43,13 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 
 **3.3.4 Elasticsearch — DEFER (đang dang dở):** đã giảng xong lý thuyết + chốt kiến trúc + **dựng hạ tầng** (docker ES+Kibana 8.15.3, dependency `spring-boot-starter-data-elasticsearch`, config `application.yaml`). **Phần code Java CHƯA làm** (Document/Repository/event-sync/search endpoint). Toàn bộ lý thuyết + Q&A + 6 bước code còn lại lưu ở **`docs/3.3.4-elasticsearch.md`**. Khi quay lại: `docker compose up -d elasticsearch kibana` rồi đọc file docs đó.
 
-**Tiếp theo (đề xuất):** có thể sang **3.4 / Giai đoạn 4 (Cart/Order)** theo ROADMAP, hoặc quay lại làm nốt 3.3.4 ES, hoặc dọn backlog cleanup 3.2.6 — tuỳ ưu tiên.
+**Tiếp theo (đề xuất):** sang **Giai đoạn 4 (Cart/Order)** theo ROADMAP, hoặc quay lại làm nốt 3.3.4 ES — tuỳ ưu tiên.
 
-**Backlog cleanup 3.2.6** vẫn còn 4 cụm DEFER (xem dưới).
-
-**Backlog cleanup còn lại** (memory `project-production-cleanup-session`):
-- ✅ **Cụm 3 — DONE** — `BaseEntity` + JPA Auditing + `@Slf4j` logging (commit 1669062, 0a6de8a)
-- ✅ **Cụm 4 — DONE** — JwtAccessDeniedHandler 403 JSON + InvalidFileException + xoá 14 file demo + `@AuthenticationPrincipal`/CustomUserDetails/getReferenceById (commit 9fd5d6b, beac5ae, c0a10cd)
-- ⏳ **Cụm 2.3** — Apply `@Version` cho 5 entity (đã giảng lý thuyết đầy đủ, chưa code). Cộng handler `ObjectOptimisticLockingFailureException` → 409.
-- ⏳ **Cụm 2.4** — TOCTOU race: catch `DataIntegrityViolationException` → `DuplicateResource` ở `GlobalExceptionHandler`
-- ⏳ **Cụm 5** — Compensating transaction cho `ProductImageService.uploadImage` (storage ↔ DB) + tách long-running I/O ra khỏi `@Transactional` (pattern store-then-record)
-- ⏳ **Lặt vặt production-grade:** Flyway/Liquibase thay `ddl-auto:update`; password validation regex; tách ProductListItemResponse vs ProductDetailResponse; InvalidFileException log error→warn (400 là client sai); xoá property `app.name/version/description` thừa trong application.yaml
+**Buổi Cleanup #1 (3.2.6) đã ĐÓNG** — 8 cụm done. Phần carry-over gom vào **buổi Cleanup #2 ở Giai đoạn 4** (ROADMAP mục 4.0), gồm:
+- ⏳ **Cụm 2.3b** — Full optimistic lock think-time (client gửi `version` qua Request+Response DTO) — đã giảng khái niệm (docs Phần 9.7b), còn code
+- ⏳ **Cụm 5b** — `deleteImage` dùng `TransactionSynchronization.afterCommit()` (làm khi migrate S3)
+- ⏳ Tách `StorageException` (500) khỏi `InvalidFileException` (400) — lỗi I/O ghi file đang trả nhầm 400
+- ⏳ **Lặt vặt:** Flyway/Liquibase thay `ddl-auto:update`; password validation regex; tách ProductListItemResponse vs ProductDetailResponse; dọn property `app.name/version/description` thừa trong application.yaml
 
 **Pattern áp dụng (3 module đã làm theo, để tham khảo khi xử lý bài sau):**
 - Entity: `@Getter @Setter @NoArgsConstructor` (KHÔNG `@Data` vì có quan hệ)
@@ -108,12 +104,12 @@ Khi mở Claude trên máy mới, paste prompt sau để có context ngay:
 
 ```
 Hi Claude, đọc docs/HANDOFF.md để biết trạng thái dự án.
-Bài 3.2.5 (refactor Lombok + MapStruct) đã xong cả 4 phần.
-Hôm nay bắt đầu BUỔI CLEANUP CHUYÊN SÂU (production-grade hardening)
-trước khi sang bài 3.3. Đọc memory project-production-cleanup-session để xem backlog.
+Buổi Cleanup #1 (3.2.6) đã xong (8 cụm). Bài 3.3 search/filter/pagination xong 3/4.
+Hôm nay bắt đầu Giai đoạn 4 (Cart/Order) theo ROADMAP.
+(Carry-over cleanup gom ở ROADMAP mục 4.0 — buổi Cleanup #2.)
 ```
 
-**Tiếp theo (đã chốt):** sang **3.3 — Tìm kiếm & Lọc sản phẩm** (search, filter, `Pageable`, có thể cả Elasticsearch). 4 cụm cleanup còn lại defer làm sau, không bắt buộc trước 3.3.
+**Tiếp theo (đã chốt):** sang **Giai đoạn 4 — Cart & Order**. Buổi Cleanup #2 (mục 4.0 ROADMAP) làm xen kẽ trong Giai đoạn 4. 3.3.4 Elasticsearch defer (hạ tầng đã dựng).
 
 ---
 

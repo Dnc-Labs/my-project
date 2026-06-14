@@ -58,15 +58,31 @@
 
 ## Giai đoạn 3: Quản lý sản phẩm (2 tuần)
 
-### 3.1 - Category
-- [ ] `Category` entity (hỗ trợ **nested category** - danh mục cha/con)
-- [ ] CRUD API cho category (chỉ ADMIN)
+### 3.1 - Category ✅
+- [x] `Category` entity (hỗ trợ **nested category** - danh mục cha/con)
+- [x] CRUD API cho category (chỉ ADMIN)
 
-### 3.2 - Product
-- [ ] `Product` entity (name, description, price, stock, status, category...)
-- [ ] CRUD API cho product (SELLER tạo/sửa, tất cả xem)
-- [ ] **Product variants** (size, color...) - `ProductVariant` entity
-- [ ] Upload **product images** (lưu file hoặc cloud storage)
+### 3.2 - Product ✅
+- [x] `Product` entity (name, description, price, stock, status, category...)
+- [x] CRUD API cho product (SELLER tạo/sửa, tất cả xem)
+- [x] **Product variants** (size, color...) - `ProductVariant` entity
+- [x] Upload **product images** (lưu file hoặc cloud storage)
+
+### 3.2.5 - Refactor: Lombok + MapStruct ✅
+- [x] Thay boilerplate getter/setter/constructor bằng Lombok
+- [x] Thay mapping thủ công bằng MapStruct (Entity ↔ DTO)
+
+### 3.2.6 - Buổi Cleanup Chuyên Sâu (production-grade hardening) ✅
+> Tài liệu đầy đủ: `docs/3.2.6-production-cleanup.md` (lý thuyết + Q&A verbatim)
+- [x] **Cụm 1** — Fix bug Category circular (walk-up + depth limit)
+- [x] **Cụm 2.1** — `@Transactional` toàn bộ service + tắt OSIV
+- [x] **Cụm 2.3** — Optimistic Locking `@Version`
+- [x] **Cụm 2.4** — TOCTOU race → `DataIntegrityViolationException` → 409
+- [x] **Cụm 3** — BaseEntity + JPA Auditing
+- [x] **Cụm 3.6** — `@Slf4j` audit logging
+- [x] **Cụm 4** — Security exception flow (#8) + custom exception (#7) + `@AuthenticationPrincipal` (#9)
+- [x] **Cụm 5** — Compensating transaction cho `uploadImage` (store-then-record)
+- [ ] _(Dời sang buổi Cleanup #2 ở Giai đoạn 4 — xem mục 4.0)_
 
 ### 3.3 - Tìm kiếm & Lọc sản phẩm
 - [x] Tìm kiếm theo tên, mô tả
@@ -77,6 +93,16 @@
 ---
 
 ## Giai đoạn 4: Giỏ hàng & Đặt hàng (2 tuần)
+
+### 4.0 - Buổi Cleanup #2 (carry-over từ 3.2.6 + hardening mới)
+> Các mục production-grade chưa làm ở 3.2.6, gom làm 1 buổi trong Giai đoạn 4.
+- [ ] **Cụm 2.3b** — Full optimistic lock (think-time): client gửi `version` (thêm vào Request + Response DTO) → bảo vệ lost-update kiểu stale-client, không chỉ race chồng lấn
+- [ ] **Cụm 5b** — `deleteImage` dùng `TransactionSynchronization.afterCommit()` (làm khi migrate S3)
+- [ ] Tách `StorageException` (500) khỏi `InvalidFileException` (400) — `LocalStorageService` lỗi I/O ghi file đang trả nhầm 400
+- [ ] **Flyway/Liquibase** thay `ddl-auto: update` (tránh schema drift, backfill có kiểm soát)
+- [ ] Password validation regex (hoặc lib passay)
+- [ ] Tách `ProductListItemResponse` vs `ProductDetailResponse` (tránh over-fetching list view)
+- [ ] Dọn property `app.name/version/description` thừa trong `application.yaml`
 
 ### 4.1 - Shopping Cart
 - [ ] `Cart`, `CartItem` entity
