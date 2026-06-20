@@ -18,7 +18,10 @@
     { "key": "categoryGrandchildId", "value": "", "type": "string" },
     { "key": "productId", "value": "", "type": "string" },
     { "key": "variantId", "value": "", "type": "string" },
-    { "key": "imageId", "value": "", "type": "string" }
+    { "key": "imageId", "value": "", "type": "string" },
+    { "key": "cartItemId", "value": "", "type": "string" },
+    { "key": "productBId", "value": "", "type": "string" },
+    { "key": "variantBId", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -648,7 +651,264 @@
       ]
     },
     {
-      "name": "7. Delete Cascade",
+      "name": "7. Cart",
+      "description": "Test giỏ hàng (4.1). Chạy SAU group 4 (Product) + 5 (Variant), TRƯỚC group 8 (Delete Cascade) — vì cart cần productId/variantId còn tồn tại.\n\nVerify: get-or-create, merge cộng dồn, live price theo variant/product, check stock theo tổng mới, ownership 404, PUT là SET (không cộng dồn).",
+      "item": [
+        {
+          "name": "Get My Cart (lần đầu — get-or-create, giỏ rỗng)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/carts", "host": ["{{baseUrl}}"], "path": ["api", "carts"] }
+          },
+          "description": "Verify: 200, items=[], totalAmount=0, totalItems=0. Cart được tạo tự động (get-or-create)."
+        },
+        {
+          "name": "Add product (no variant, qty 2) — save cartItemId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.items && res.data.items.length) {",
+                  "  pm.collectionVariables.set('cartItemId', res.data.items[0].id);",
+                  "  console.log('✓ cartItemId = ' + res.data.items[0].id);",
+                  "  console.log('  unitPrice = ' + res.data.items[0].unitPrice);",
+                  "  console.log('  subTotal = ' + res.data.items[0].subTotal);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Verify: 1 dòng, quantity=2, unitPrice = product.price (229000 sau update), subTotal = 458000, variantId/variantName = null."
+        },
+        {
+          "name": "Add SAME product (qty 3) → MERGE cộng dồn",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "⭐ Verify MERGE: VẪN 1 dòng (không tạo dòng mới), quantity = 2+3 = 5. Đây là test logic findExisting + cộng dồn."
+        },
+        {
+          "name": "Add WITH variant (qty 1) → giá theo variant",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"variantId\": {{variantId}},\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Verify: giờ 2 dòng. Dòng mới có variantId + variantName ('M / Trắng'), unitPrice = variant.price (199000), KHÔNG merge vào dòng no-variant."
+        },
+        {
+          "name": "[SETUP] Create Product B (save productBId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('productBId', res.data.id);",
+                  "  console.log('✓ productBId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sản phẩm B (cart test)\",\n  \"slug\": \"san-pham-b-cart-test\",\n  \"sku\": \"CART-B-001\",\n  \"price\": 50000,\n  \"stock\": 10,\n  \"categoryId\": {{categoryGrandchildId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          },
+          "description": "Tạo product B + variant B để test 'variant không thuộc product'."
+        },
+        {
+          "name": "[SETUP] Create Variant B (save variantBId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('variantBId', res.data.id);",
+                  "  console.log('✓ variantBId = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"size\": \"S\",\n  \"color\": \"Xanh\",\n  \"sku\": \"CART-B-001-S-BL\",\n  \"price\": 60000,\n  \"stock\": 5\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products/{{productBId}}/variants", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productBId}}", "variants"] }
+          }
+        },
+        {
+          "name": "[ERROR] Add variant của Product B vào Product A → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"variantId\": {{variantBId}},\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Expect: 400 BusinessRule — 'Variant does not belong to this product'. Test bug ownership variant đã fix (dấu !)."
+        },
+        {
+          "name": "[ERROR] Add vượt tồn kho → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 999999\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Expect: 400 — 'Requested quantity exceeds available stock'. Lưu ý check theo TỔNG mới (đã có 5 + 999999)."
+        },
+        {
+          "name": "[ERROR] Add product không tồn tại → 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 999999,\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Expect: 404 — 'Product not found or not available' (findByIdAndStatus miss)."
+        },
+        {
+          "name": "Update item (qty=1) → SET không cộng dồn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items/{{cartItemId}}", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items", "{{cartItemId}}"] }
+          },
+          "description": "⭐ Verify PUT = SET: dòng đang qty=5, gửi 1 → quantity = 1 (KHÔNG phải 6). Test bug updateItem đã fix."
+        },
+        {
+          "name": "[ERROR] Update item của user khác (Admin) → 404 ownership",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items/{{cartItemId}}", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items", "{{cartItemId}}"] }
+          },
+          "description": "Expect: 404 — cartItemId thuộc giỏ của Seller, Admin sửa → findItemOfUser ném NotFound (ẩn sự tồn tại). Test ownership."
+        },
+        {
+          "name": "Get My Cart (verify totals + N+1 đã fix)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/carts", "host": ["{{baseUrl}}"], "path": ["api", "carts"] }
+          },
+          "description": "Verify: 2 dòng, totalAmount = sum(subTotal), totalItems = sum(quantity).\n⭐ Xem SQL log app: chỉ 1 query JOIN (nhờ @EntityGraph findByUserIdWithItems), KHÔNG N+1."
+        },
+        {
+          "name": "Delete 1 item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/carts/items/{{cartItemId}}", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items", "{{cartItemId}}"] }
+          },
+          "description": "Verify: 200, dòng cartItemId biến mất (còn 1 dòng variant)."
+        },
+        {
+          "name": "Clear cart (xóa hết)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/carts", "host": ["{{baseUrl}}"], "path": ["api", "carts"] }
+          },
+          "description": "Verify: 200. GET lại → items=[] (orphanRemoval xóa hết CartItem)."
+        },
+        {
+          "name": "[CLEANUP] Delete Product B",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productBId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productBId}}"] }
+          },
+          "description": "Dọn product B (+ variant B cascade) đã tạo cho test."
+        }
+      ]
+    },
+    {
+      "name": "8. Delete Cascade",
       "description": "Verify cascade ALL: xoá product → variants + images bị xoá theo.",
       "item": [
         {

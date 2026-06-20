@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-06-09
+**Cập nhật lần cuối:** 2026-06-18
 
 ---
 
@@ -22,6 +22,7 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **4.1 Shopping Cart — CODE XONG** (test E2E để sau) — `docs/4.1-shopping-cart.md`. Entity (owning/inverse side) + DTO + Repository (`findExisting` xử lý variant NULL, `findByUserIdWithItems` `@EntityGraph` chống N+1) + Mapper (`@AfterMapping` tính live price/subtotal/total) + Service (get-or-create, merge cộng dồn, check stock theo tổng mới, ownership 404, ACTIVE check) + Controller (5 endpoint, user từ `@AuthenticationPrincipal`). Postman group "7. Cart" (15 request) đã thêm — **chưa chạy test**. Docs có 2 deep-dive lớn: **`reduce` Stream API** + **N+1 query** (verbatim Q&A).
 - ✅ **3.2.6 Buổi Cleanup Chuyên Sâu — HOÀN THÀNH** (production-grade hardening) — `docs/3.2.6-production-cleanup.md` (11 phần, lý thuyết + Q&A verbatim). Cụm 1 (Category circular) + 2.1 (`@Transactional`+OSIV) + 2.3 (`@Version` optimistic lock) + 2.4 (TOCTOU/`DataIntegrityViolation`→409) + 3 (BaseEntity+Auditing) + 3.6 (`@Slf4j`) + 4 (security exception/#7#8#9) + 5 (compensating tx `uploadImage`). **Buổi cleanup #1 đóng lại**, phần còn lại dời sang **buổi Cleanup #2 ở Giai đoạn 4** (ROADMAP mục 4.0).
 - ✅ **3.3.1 → 3.3.3: Pagination + Search + Filter động** — `docs/3.3-search-filter-pagination.md`. Pageable/Sort foundation + `PageResponse<T>` (fix warning PageImpl) + `@Query` search keyword + JPA Specification filter động (category/price/status) + `@BatchSize` chống N+1. Build pass, đã test E2E. Còn **3.3.4 Elasticsearch** chưa làm.
 - ✅ **3.2.5 Phần 4: Refactor module Product + Variant + Image** — `docs/3.2.5-refactor-product-module.md`
@@ -109,7 +110,11 @@ Hôm nay bắt đầu Giai đoạn 4 (Cart/Order) theo ROADMAP.
 (Carry-over cleanup gom ở ROADMAP mục 4.0 — buổi Cleanup #2.)
 ```
 
-**Tiếp theo (đã chốt):** sang **Giai đoạn 4 — Cart & Order**. Buổi Cleanup #2 (mục 4.0 ROADMAP) làm xen kẽ trong Giai đoạn 4. 3.3.4 Elasticsearch defer (hạ tầng đã dựng).
+**Tiếp theo (đã chốt):** **4.1 Cart đã code xong** (test E2E để sau). Phần kế: **4.2 Order** (order status flow, trừ tồn kho an toàn với locking, email `@Async`). Buổi Cleanup #2 (mục 4.0 ROADMAP) làm xen kẽ. 3.3.4 Elasticsearch defer (hạ tầng đã dựng).
+
+**Việc còn nợ ở 4.1 (làm khi quay lại):**
+- ⏳ Chạy test E2E Postman group "7. Cart" (15 request) — bật `show-sql: true` tạm để verify N+1 đã fix bằng `@EntityGraph`
+- ⏳ Concurrency/optimistic-lock think-time cho cart → gom vào buổi Cleanup #2
 
 ---
 

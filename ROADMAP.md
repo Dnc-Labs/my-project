@@ -104,10 +104,14 @@
 - [ ] Tách `ProductListItemResponse` vs `ProductDetailResponse` (tránh over-fetching list view)
 - [ ] Dọn property `app.name/version/description` thừa trong `application.yaml`
 
-### 4.1 - Shopping Cart
-- [ ] `Cart`, `CartItem` entity
-- [ ] API: thêm/xóa/cập nhật sản phẩm trong giỏ, xem giỏ hàng
-- [ ] Xử lý **concurrency** khi cập nhật giỏ hàng (áp dụng multi-threading)
+### 4.1 - Shopping Cart ✅ (code xong, test E2E để sau)
+> Tài liệu: `docs/4.1-shopping-cart.md` (lý thuyết + Q&A verbatim, gồm deep-dive `reduce` và N+1 query)
+- [x] `Cart`, `CartItem` entity (owning/inverse side, BaseEntity, unique constraint dòng trùng)
+- [x] API: thêm/xóa/cập nhật sản phẩm trong giỏ, xem giỏ hàng (5 endpoint)
+- [x] Live price + merge cộng dồn + check stock mềm + ownership 404
+- [x] Chống N+1 khi xem giỏ bằng `@EntityGraph` (`findByUserIdWithItems`)
+- [ ] Test E2E (Postman group "7. Cart" đã thêm — chạy sau)
+- [ ] Xử lý **concurrency/optimistic lock think-time** khi cập nhật giỏ (gom vào buổi Cleanup #2 — mục 4.0)
 
 ### 4.2 - Order
 - [ ] `Order`, `OrderItem` entity

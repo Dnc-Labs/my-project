@@ -1,8 +1,12 @@
 package com.ecommerce.api.repository;
 
 import com.ecommerce.api.entity.Product;
+import com.ecommerce.api.enums.ProductStatus;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -20,4 +24,5 @@ public interface ProductRepository
      boolean existsBySlug(String slug);
      boolean existsBySku(String sku);
      Optional<Product> findBySlug(String slug);
+     Optional<Product> findByIdAndStatus(Long productId, ProductStatus status);
 }

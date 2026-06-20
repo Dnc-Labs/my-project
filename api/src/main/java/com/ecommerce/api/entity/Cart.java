@@ -1,46 +1,25 @@
 package com.ecommerce.api.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "carts")
-public class Cart {
-
+@Getter
+@Setter
+public class Cart extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // - user: 1 Cart thuộc 1 User (@OneToOne)
-    // - cartItems: 1 Cart có nhiều CartItem (@OneToMany)
+//   OWNING side, giu key
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
-    @OneToMany
-    private List<CartItem> cartItems;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public List<CartItem> getCartItems() {
-        return cartItems;
-    }
-
-    public void setCartItems(List<CartItem> cartItems) {
-        this.cartItems = cartItems;
-    }
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> cartItems = new ArrayList<>();
 }
