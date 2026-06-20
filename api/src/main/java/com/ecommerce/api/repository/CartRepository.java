@@ -9,6 +9,9 @@ import java.util.Optional;
 public interface CartRepository extends JpaRepository<Cart, Long> {
     Optional<Cart> findByUserId(Long userId);
 
+    // "WithItems" đặt TRƯỚC "By" → Spring Data coi là chữ mô tả, bỏ qua khi parse;
+    // điều kiện thực = ByUserId. Nếu để sau By ("findByUserIdWithItems") sẽ bị hiểu
+    // nhầm là property → QueryCreationException.
     @EntityGraph(attributePaths = {"cartItems", "cartItems.product", "cartItems.productVariant"})
-    Optional<Cart> findByUserIdWithItems(Long userId);
+    Optional<Cart> findWithItemsByUserId(Long userId);
 }

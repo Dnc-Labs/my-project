@@ -36,7 +36,7 @@ public class CartService {
 
     @Transactional
     public CartResponse getMyCart(Long userId) {
-        Cart cart = cartRepository.findByUserIdWithItems(userId).orElseGet(() -> getOrCreateCart(userId));
+        Cart cart = cartRepository.findWithItemsByUserId(userId).orElseGet(() -> getOrCreateCart(userId));
         return cartMapper.toCartResponse(cart);
     }
 
