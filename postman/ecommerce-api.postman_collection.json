@@ -21,7 +21,9 @@
     { "key": "imageId", "value": "", "type": "string" },
     { "key": "cartItemId", "value": "", "type": "string" },
     { "key": "productBId", "value": "", "type": "string" },
-    { "key": "variantBId", "value": "", "type": "string" }
+    { "key": "variantBId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "orderId2", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -908,7 +910,220 @@
       ]
     },
     {
-      "name": "8. Delete Cascade",
+      "name": "8. Order",
+      "description": "Test đặt hàng (4.2). Chạy SAU group 4 (Product) + 5 (Variant), TRƯỚC group 9 (Delete Cascade).\n\nDùng sellerToken làm người mua. Verify: checkout (snapshot price + trừ stock + xóa giỏ), state machine (confirm/ship/deliver), invalid transition → 400, cancel → hoàn stock, checkout giỏ rỗng → 400.\n\nLưu ý: test 'customer không được advance status' cần 1 account CUSTOMER riêng (chưa thêm) — sellerToken là staff nên advance được.",
+      "item": [
+        {
+          "name": "[SETUP] Add product to cart (qty 2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          },
+          "description": "Group 7 đã clear giỏ → thêm lại item để checkout. Product A stock=100 trước test."
+        },
+        {
+          "name": "Checkout → Order A (save orderId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('orderId', res.data.id);",
+                  "  console.log('✓ orderId = ' + res.data.id);",
+                  "  console.log('  status = ' + res.data.status);",
+                  "  console.log('  totalAmount = ' + res.data.totalAmount);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": \"123 Lê Lợi, Q1, TP.HCM\",\n  \"note\": \"Giao giờ hành chính\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          },
+          "description": "⭐ Verify: 201 Created, status=PENDING, items có price SNAPSHOT (= product.price lúc mua), totalAmount = Σ(price×qty). Product A stock 100→98. Giỏ bị xóa sạch (GET /api/carts → rỗng)."
+        },
+        {
+          "name": "Get my orders (list summary)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          },
+          "description": "Verify: trả OrderSummaryResponse (KHÔNG có items), có phân trang."
+        },
+        {
+          "name": "Get my orders filter status=PENDING",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          },
+          "description": "Verify: chỉ đơn PENDING (findByCustomerIdAndStatus)."
+        },
+        {
+          "name": "Get Order detail A",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{sellerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}"] }
+          },
+          "description": "Verify: OrderDetailResponse có items + customer + snapshot price."
+        },
+        {
+          "name": "Confirm Order A (PENDING→CONFIRMED)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CONFIRMED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "status"] }
+          },
+          "description": "Seller/Admin advance. Verify status=CONFIRMED."
+        },
+        {
+          "name": "Ship Order A (CONFIRMED→SHIPPING)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SHIPPING\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "status"] }
+          }
+        },
+        {
+          "name": "Deliver Order A (SHIPPING→DELIVERED)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"DELIVERED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "status"] }
+          },
+          "description": "Verify status=DELIVERED (trạng thái cuối)."
+        },
+        {
+          "name": "[ERROR] Invalid transition DELIVERED→PENDING",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"PENDING\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "status"] }
+          },
+          "description": "Expect: 400 — 'Invalid status transition: DELIVERED -> PENDING' (state machine chặn)."
+        },
+        {
+          "name": "[SETUP] Add product to cart (qty 3) cho Order B",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 3\n}" },
+            "url": { "raw": "{{baseUrl}}/api/carts/items", "host": ["{{baseUrl}}"], "path": ["api", "carts", "items"] }
+          }
+        },
+        {
+          "name": "Checkout → Order B (save orderId2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('orderId2', res.data.id);",
+                  "  console.log('✓ orderId2 = ' + res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"shippingAddress\": \"456 Nguyễn Huệ, Q1\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          },
+          "description": "Product A stock 98→95 sau checkout này."
+        },
+        {
+          "name": "Cancel Order B (PENDING→CANCELLED) → hoàn stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CANCELLED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId2}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId2}}", "status"] }
+          },
+          "description": "⭐ Verify CANCEL + RESTOCK: status=CANCELLED, stock product A 95→98 (cộng trả qty=3)."
+        },
+        {
+          "name": "Verify restock — GET product A (stock=98)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          },
+          "description": "Verify stock = 98 (100 - 2 của order A đã deliver; order B đã hoàn lại 3)."
+        },
+        {
+          "name": "[ERROR] Checkout giỏ rỗng → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sellerToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"shippingAddress\": \"789 Test\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          },
+          "description": "Giỏ đã rỗng (order B đã lấy hết) → Expect 400 'Cart is empty'."
+        }
+      ]
+    },
+    {
+      "name": "9. Delete Cascade",
       "description": "Verify cascade ALL: xoá product → variants + images bị xoá theo.",
       "item": [
         {

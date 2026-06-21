@@ -1,24 +1,29 @@
 package com.ecommerce.api.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.math.BigDecimal;
 
+/**
+ * OrderItem — 1 dòng đơn hàng. KHÁC CartItem: có field `price` SNAPSHOT
+ * (giá tại thời điểm mua), không đọc live từ product/variant.
+ */
+@Getter
+@Setter
 @Entity
 @Table(name = "order_items")
-public class OrderItem {
+public class OrderItem extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // - quantity (Integer, not null)
-    // - price (BigDecimal — giá tại thời điểm mua, không dùng giá hiện tại của Product)
+
     @Column(nullable = false)
     private Integer quantity;
-    private BigDecimal price;
 
-    // - order: nhiều OrderItem thuộc 1 Order (@ManyToOne)
-    // - product: nhiều OrderItem liên kết 1 Product (@ManyToOne)
-    // - variant: nhiều OrderItem có thể liên kết 1 ProductVariant (@ManyToOne, optional)
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price;
 
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
@@ -31,53 +36,4 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "product_variant_id")
     private ProductVariant productVariant;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Order getOrder() {
-        return order;
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
-    }
-
-    public ProductVariant getProductVariant() {
-        return productVariant;
-    }
-
-    public void setProductVariant(ProductVariant productVariant) {
-        this.productVariant = productVariant;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
 }

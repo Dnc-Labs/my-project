@@ -50,7 +50,7 @@ public class User extends BaseEntity {
 
     // - orders: 1 User có nhiều Order (@OneToMany)
     // - cart: 1 User có 1 Cart (@OneToOne)
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "customer")
     private List<Order> orderList;
 
     @OneToOne(mappedBy = "user")

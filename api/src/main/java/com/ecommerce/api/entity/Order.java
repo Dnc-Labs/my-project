@@ -2,28 +2,31 @@ package com.ecommerce.api.entity;
 
 import com.ecommerce.api.enums.OrderStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Order — đơn hàng (cam kết, vĩnh viễn). Khác Cart:
+ * - totalAmount SNAPSHOT (đóng băng giá lúc mua) — hợp đồng, không đọc live.
+ * - user @ManyToOne (1 user nhiều đơn), khác Cart @OneToOne.
+ * - chỉ đổi status theo state machine, không sửa item tự do.
+ */
+@Getter
+@Setter
 @Entity
 @Table(name = "orders")
-public class Order {
-
+public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // - status (String — "PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "CANCELLED")
-    // - totalAmount (BigDecimal)
-    // - shippingAddress (String, TEXT)
-    // - note (String, TEXT)
-    // - createdAt (LocalDateTime)
-    // - updatedAt (LocalDateTime)
-
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.PENDING;
 
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount;
 
     @Column(columnDefinition = "TEXT")
@@ -32,88 +35,10 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    private User customer;
 
-    // - user: nhiều Order thuộc 1 User (@ManyToOne)
-    // - orderItems: 1 Order có nhiều OrderItem (@OneToMany)
-
-    @ManyToOne()
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @OneToMany(mappedBy = "order")
-    private List<OrderItem> orderItems;
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getShippingAddress() {
-        return shippingAddress;
-    }
-
-    public void setShippingAddress(String shippingAddress) {
-        this.shippingAddress = shippingAddress;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
-    }
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems = new ArrayList<>();
 }

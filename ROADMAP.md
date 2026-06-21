@@ -113,12 +113,14 @@
 - [ ] Test E2E (Postman group "7. Cart" đã thêm — chạy sau)
 - [ ] Xử lý **concurrency/optimistic lock think-time** khi cập nhật giỏ (gom vào buổi Cleanup #2 — mục 4.0)
 
-### 4.2 - Order
-- [ ] `Order`, `OrderItem` entity
-- [ ] **Order status flow**: PENDING → CONFIRMED → SHIPPING → DELIVERED → CANCELLED
-- [ ] API: đặt hàng từ giỏ, xem đơn hàng, hủy đơn
-- [ ] Xử lý **trừ tồn kho** an toàn (optimistic locking / pessimistic locking)
-- [ ] Gửi **email xác nhận** đơn hàng (dùng `@Async` + JavaMailSender)
+### 4.2 - Order ✅ (code xong, test E2E + email để sau)
+> Tài liệu: `docs/4.2-order.md` (deep-dive: 3 cách chống oversell, `@Lock` syntax, isolation levels, stale-read gotcha, multi-node)
+- [x] `Order`, `OrderItem` entity (snapshot price/total, extends BaseEntity)
+- [x] **Order status flow**: PENDING → CONFIRMED → SHIPPING → DELIVERED / CANCELLED (state machine + phân quyền)
+- [x] API: đặt hàng từ giỏ, xem list/detail đơn, đổi status, hủy đơn (hoàn stock khi cancel)
+- [x] Xử lý **trừ tồn kho** an toàn — **pessimistic lock** (`em.refresh(PESSIMISTIC_WRITE)`) chống oversell, an toàn đa node
+- [ ] Test E2E (Postman group "9. Order" đã thêm — chạy sau)
+- [ ] Gửi **email xác nhận** đơn hàng (dùng `@Async` + JavaMailSender) — chưa làm
 
 ---
 
