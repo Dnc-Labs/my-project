@@ -15,12 +15,14 @@ import com.ecommerce.api.enums.Role;
 import com.ecommerce.api.exception.BusinessRuleException;
 import com.ecommerce.api.exception.ResourceNotFoundException;
 import com.ecommerce.api.mapper.OrderMapper;
+import com.ecommerce.api.event.OrderCreatedEvent;
 import com.ecommerce.api.repository.CartRepository;
 import com.ecommerce.api.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final OrderMapper orderMapper;
     private final EntityManager entityManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ============ CHECKOUT (trái tim của bài) ============
 
@@ -73,6 +76,25 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         Order saved = orderRepository.save(order);
         cart.getCartItems().clear();
+
+        // Build snapshot NGAY ở đây (session còn mở) để tránh LazyInitializationException ở thread mail.
+        // Listener @TransactionalEventListener(AFTER_COMMIT) chỉ gửi mail sau khi tx này commit.
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                saved.getCustomer().getEmail(),
+                saved.getCustomer().getFullName(),
+                saved.getId(),
+                saved.getTotalAmount(),
+                saved.getOrderItems().stream().map(item -> {
+                    ProductVariant v = item.getProductVariant();
+                    // variant null = sản phẩm không có biến thể → variantName null
+                    String variantName = (v == null) ? null : v.getSize() + " / " + v.getColor();
+                    return new OrderCreatedEvent.Line(
+                            item.getProduct().getName(),
+                            variantName,
+                            item.getPrice(),
+                            item.getQuantity());
+                }).toList());
+        eventPublisher.publishEvent(event);
         return orderMapper.toDetail(saved);
     }
 

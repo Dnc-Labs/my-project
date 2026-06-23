@@ -120,7 +120,9 @@
 - [x] API: đặt hàng từ giỏ, xem list/detail đơn, đổi status, hủy đơn (hoàn stock khi cancel)
 - [x] Xử lý **trừ tồn kho** an toàn — **pessimistic lock** (`em.refresh(PESSIMISTIC_WRITE)`) chống oversell, an toàn đa node
 - [ ] Test E2E (Postman group "9. Order" đã thêm — chạy sau)
-- [ ] Gửi **email xác nhận** đơn hàng (dùng `@Async` + JavaMailSender) — chưa làm
+- [x] Gửi **email xác nhận** đơn hàng (`@Async` + JavaMailSender + `@TransactionalEventListener(AFTER_COMMIT)`)
+  > Tài liệu: `docs/4.2-order-email.md` (deep-dive: race khi publish trong tx, snapshot chống lazy, cơ chế `publishEvent`/Observer, khi nào nâng lên message broker + Outbox)
+  > Test E2E (MailHog/Mailtrap) — để sau
 
 ---
 

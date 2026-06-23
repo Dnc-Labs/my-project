@@ -16,6 +16,18 @@ spring:
       hibernate:
         format_sql: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}          # đọc từ biến môi trường (Gmail address)
+    password: ${MAIL_PASSWORD}          # Gmail App Password (KHÔNG phải mật khẩu thường)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true                # bật TLS — Gmail yêu cầu kết nối mã hóa
+    # from address dùng khi gửi (đọc trong EmailService); để riêng vì 'username' có thể khác alias gửi
   servlet:
     multipart:
       enabled: true
@@ -29,6 +41,8 @@ app:
   name: my-app
   version: "1.0"
   description: "This is learning app"
+  mail:
+    from: ${MAIL_USERNAME}        # địa chỉ hiển thị ở field "From" của email
 jwt:
   secret: my-super-secret-key-for-jwt-must-be-at-least-256-bits-long-for-hs256
   access-token-expiration: 900000    # 15 phút (milliseconds)
