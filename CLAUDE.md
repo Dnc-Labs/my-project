@@ -35,10 +35,13 @@
 8. **Clean TODO comments** trước khi tạo docs/commit (xem mục "Clean code khi hoàn thành")
 
 ### Lưu trữ lý thuyết
-- Sau mỗi buổi học (hoặc khi kết thúc một chủ đề trong ROADMAP), **tổng hợp toàn bộ lý thuyết + câu hỏi/trả lời** vào file riêng trong thư mục `docs/`
+- Sau mỗi buổi học (hoặc khi kết thúc một chủ đề trong ROADMAP), **ghi lại TOÀN BỘ đoạn hội thoại** vào file riêng trong thư mục `docs/`
 - Đặt tên file theo mục ROADMAP, ví dụ: `docs/0.1-spring-core-di.md`, `docs/0.2-spring-boot-basics.md`
-- **Copy đúng nguyên văn** câu hỏi của người học và câu trả lời — KHÔNG tóm tắt, KHÔNG diễn đạt lại. Có thể thêm tiêu đề phân nhóm để dễ đọc, nhưng nội dung Q&A phải giữ verbatim
-- Mục đích: docs là tài liệu tra cứu, cần phản ánh chính xác cuộc trao đổi để đồng bộ kiến thức khi học trên nhiều máy khác nhau
+- **Ghi nguyên văn 100% — KHÔNG tóm tắt, KHÔNG diễn đạt lại, KHÔNG cắt bớt:**
+  - **Toàn bộ** những gì assistant generate ra (lý thuyết, giảng giải, ASCII diagram, emoji, code, mọi đoạn) VÀ **toàn bộ** câu hỏi/câu trả lời của người học
+  - Giữ **đúng thứ tự thời gian** của cuộc hội thoại — đọc lại file phải như đọc lại nguyên đoạn chat
+  - Có thể thêm tiêu đề phân nhóm (heading) để dễ điều hướng, nhưng **không được sửa nội dung** bên trong
+- Mục đích: docs là bản ghi đầy đủ cuộc hội thoại để người học đọc lại/đồng bộ kiến thức khi học trên nhiều máy khác nhau
 
 ### Clean code khi hoàn thành (trước khi docs/commit)
 Mỗi khi đến bước **tạo docs** hoặc **commit** cho feature đã hoàn thành, **tự động clean TODO scaffolding** trong các file thuộc feature đó (quét bằng `grep -rn "TODO" api/src/main/java`):
