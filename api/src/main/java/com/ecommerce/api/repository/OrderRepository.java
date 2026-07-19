@@ -13,6 +13,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findByCustomerId(Long customerId, Pageable pageable);
     Page<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status, Pageable page);
+
     @EntityGraph(attributePaths = {"orderItems", "orderItems.product", "orderItems.productVariant"})
     Optional<Order> findWithItemById(Long orderId);
 }

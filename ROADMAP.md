@@ -126,12 +126,14 @@
 
 ---
 
-## Giai đoạn 5: Thanh toán (1-2 tuần)
-
-- [ ] Tích hợp **payment gateway** (VNPay / Stripe)
-- [ ] Xử lý **callback/webhook** từ cổng thanh toán
-- [ ] Quản lý trạng thái thanh toán
-- [ ] Xử lý **idempotency** (tránh thanh toán trùng)
+## Giai đoạn 5: Thanh toán (1-2 tuần) ✅ (code xong, test E2E để sau)
+> Tài liệu: `docs/5-payment-vnpay.md` (nguyên văn: HMAC-SHA512, IPN vs Return, idempotency, shared secret, gotcha BigDecimal/@Enumerated/dirty-checking)
+- [x] Tích hợp **payment gateway** (VNPay sandbox) — `Payment` entity (append-only, 1 Order → N Payment), `VnpayService` (build URL + ký/verify HMAC-SHA512, sort TreeMap + URL-encode)
+- [x] Xử lý **callback/webhook** — IPN handler (source of truth) + Return URL (chỉ hiển thị UI); `SecurityConfig` mở public 2 endpoint, an toàn nhờ verify chữ ký
+- [x] Quản lý trạng thái thanh toán — `PaymentStatus` PENDING/SUCCESS/FAILED; IPN set Payment SUCCESS + Order CONFIRMED
+- [x] Xử lý **idempotency** — `txnRef` unique + check `payment.status != PENDING` ở IPN; RspCode "biên nhận" chống VNPay retry
+- [ ] Test E2E (tự ký IPN giả bắn vào localhost — không cần ngrok) — chạy sau
+- [ ] Refactor DRY: `buildHashData` dùng chung `createPaymentUrl` + `verifySignature`
 
 ---
 

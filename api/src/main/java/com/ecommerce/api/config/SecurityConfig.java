@@ -62,6 +62,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/variants/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()  // serve static images
+                        // VNPay gọi vào KHÔNG có token của mình → phải public. An toàn nhờ verify chữ ký HMAC,
+                        // KHÔNG phải vì tin request. /vnpay/create vẫn cần login (không liệt kê ở đây).
+                        .requestMatchers(HttpMethod.GET, "/api/payments/vnpay/ipn", "/api/payments/vnpay/return").permitAll()
                         .anyRequest().authenticated() // Tất cả request còn lại đều cần authentication
                 )
 

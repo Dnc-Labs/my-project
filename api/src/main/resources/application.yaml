@@ -52,3 +52,12 @@ storage:
   local:
     upload-dir: ./uploads       # folder lưu file (relative đến working dir)
     public-url-prefix: /uploads # URL prefix khi serve file qua HTTP
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE:9VJQ6RC2}          # mã merchant (sandbox demo); override bằng env khi cần
+  hash-secret: ${VNPAY_HASH_SECRET:6JTDWZ4EDHWHD6IABCFNAEK1R2726CU4}  # khóa ký/verify HMAC-SHA512 — KHÔNG để lộ ở prod
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html   # trang nhập thẻ VNPay
+  return-url: http://localhost:8080/api/payments/vnpay/return  # nơi VNPay redirect user về (chỉ hiển thị UI)
+  ipn-url: http://localhost:8080/api/payments/vnpay/ipn        # nơi VNPay gọi server-to-server (source of truth)
+  version: "2.1.0"              # version API VNPay yêu cầu trong tham số vnp_Version
+  command: pay                 # loại lệnh — 'pay' = thanh toán
+  locale: vn                   # ngôn ngữ trang thanh toán
