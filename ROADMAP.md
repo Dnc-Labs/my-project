@@ -132,8 +132,9 @@
 - [x] Xử lý **callback/webhook** — IPN handler (source of truth) + Return URL (chỉ hiển thị UI); `SecurityConfig` mở public 2 endpoint, an toàn nhờ verify chữ ký
 - [x] Quản lý trạng thái thanh toán — `PaymentStatus` PENDING/SUCCESS/FAILED; IPN set Payment SUCCESS + Order CONFIRMED
 - [x] Xử lý **idempotency** — `txnRef` unique + check `payment.status != PENDING` ở IPN; RspCode "biên nhận" chống VNPay retry
-- [ ] Test E2E (tự ký IPN giả bắn vào localhost — không cần ngrok) — chạy sau
+- [x] Test E2E (tự ký IPN giả bắn vào localhost, `scripts/sign-vnpay-ipn.ps1`) — **PASS 6/6**: happy path (order CONFIRMED + payment SUCCESS), idempotency (RspCode 02), sai chữ ký (97), txnRef lạ (01), sai tiền (04), giao dịch FAILED (00 nhưng payment FAILED). Kèm fix schema drift: drop cột `user_id` mồ côi ở bảng `orders` (ddl-auto:update để lại)
 - [ ] Refactor DRY: `buildHashData` dùng chung `createPaymentUrl` + `verifySignature`
+- [ ] **Refactor abstraction rò rỉ** (đã có `IPaymentGateway` cho createUrl+verify): đẩy nốt `parseCallback` + DTO trung lập `PaymentCallback(txnRef, amount, success, providerTxnNo)` vào interface để gỡ `vnp_*` khỏi `PaymentService.handleIpn`; cân nhắc 1-cổng (`@ConditionalOnProperty`) vs nhiều-cổng (Map<provider, gateway> chọn runtime); đổi tên `IPaymentGateway` → `PaymentGateway` (bỏ tiền tố I kiểu .NET)
 
 ---
 
