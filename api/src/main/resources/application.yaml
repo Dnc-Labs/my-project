@@ -10,11 +10,16 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate          # Flyway sở hữu schema; Hibernate chỉ đối chiếu entity↔schema lúc start
     show-sql: false
     properties:
       hibernate:
         format_sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true     # DB đã có sẵn schema → đánh dấu baseline thay vì cố chạy lại V1
+    baseline-version: 1           # coi schema hiện tại là V1 (V1__baseline.sql chỉ chạy trên DB rỗng)
 
   mail:
     host: smtp.gmail.com
