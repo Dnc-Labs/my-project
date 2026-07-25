@@ -3,7 +3,6 @@ package com.ecommerce.api.controllers;
 import com.ecommerce.api.dto.request.CreatePaymentRequest;
 import com.ecommerce.api.dto.response.BaseResponse;
 import com.ecommerce.api.dto.response.PaymentUrlResponse;
-import com.ecommerce.api.dto.response.VnpayIpnResponse;
 import com.ecommerce.api.security.CustomUserDetails;
 import com.ecommerce.api.services.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,9 +42,8 @@ public class PaymentController {
      * vì VNPay đòi đúng format {"RspCode","Message"}.
      */
     @GetMapping("/vnpay/ipn")
-    public ResponseEntity<VnpayIpnResponse> vnpayIpn(@RequestParam Map<String, String> params) {
-        VnpayIpnResponse vnpayIpnResponse =  paymentService.handleIpn(params);
-        return ResponseEntity.ok(vnpayIpnResponse);
+    public ResponseEntity<Object> vnpayIpn(@RequestParam Map<String, String> params) {
+        return ResponseEntity.ok(paymentService.handleIpn(params));
     }
 
     /**

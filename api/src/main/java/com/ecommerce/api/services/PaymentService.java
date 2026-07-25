@@ -1,9 +1,9 @@
 package com.ecommerce.api.services;
 
 import com.ecommerce.api.dto.response.PaymentUrlResponse;
-import com.ecommerce.api.dto.response.VnpayIpnResponse;
 import com.ecommerce.api.entity.Order;
 import com.ecommerce.api.entity.Payment;
+import com.ecommerce.api.enums.IpnResult;
 import com.ecommerce.api.enums.OrderStatus;
 import com.ecommerce.api.enums.PaymentProvider;
 import com.ecommerce.api.enums.PaymentStatus;
@@ -31,7 +31,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final VnpayService vnpayService;
+    private final PaymentGateway paymentGateway;
 
     /**
      * Tạo một lần thử thanh toán cho đơn → trả URL VNPay để client redirect.
@@ -51,7 +51,7 @@ public class PaymentService {
         payment.setTxnRef(txnRef);
         // new Payment() là transient → phải save() tường minh (dirty checking chỉ áp cho entity managed)
         paymentRepository.save(payment);
-        String url = vnpayService.createPaymentUrl(orderId, txnRef, order.getTotalAmount(), ipAddr);
+        String url = paymentGateway.createPaymentUrl(orderId, txnRef, order.getTotalAmount(), ipAddr);
         return new PaymentUrlResponse(url);
     }
 
@@ -62,22 +62,22 @@ public class PaymentService {
      * để VNPay ngừng retry — KHÔNG phải nghĩa "giao dịch thành công".
      */
     @Transactional
-    public VnpayIpnResponse handleIpn(Map<String, String> params) {
-        if(!vnpayService.verifySignature(params)) return new VnpayIpnResponse("97", "Invalid Checksum");
-        String txnRef = params.get("vnp_TxnRef");
-        Optional<Payment> paymentOptional = paymentRepository.findByTxnRef(txnRef);
-        if(paymentOptional.isEmpty()) return new VnpayIpnResponse("01", "Order not found");
+    public Object handleIpn(Map<String, String> params) {
+        if(!paymentGateway.verifySignature(params)) return paymentGateway.buildIpnResponse(IpnResult.INVALID_SIGNATURE);
+        PaymentCallback cb = paymentGateway.parseCallback(params);
+        Optional<Payment> paymentOptional = paymentRepository.findByTxnRef(cb.txnRef());
+        if(paymentOptional.isEmpty()) return paymentGateway.buildIpnResponse(IpnResult.ORDER_NOT_FOUND);
         Payment payment = paymentOptional.get();
         // Idempotency: đã xử lý (status != PENDING) → bỏ qua, không cập nhật lại
-        if(!payment.getStatus().equals(PaymentStatus.PENDING)) return new VnpayIpnResponse("02", "Order already confirmed");
-        // vnp_Amount VNPay gửi đã ×100; so bằng long để tránh bẫy scale của BigDecimal.equals
-        Long vnpAmount = new BigDecimal(params.get("vnp_Amount")).longValue();
-        if(!vnpAmount.equals(payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue()))  return new VnpayIpnResponse("04", "Invalid Amount");
+        if(!payment.getStatus().equals(PaymentStatus.PENDING)) return paymentGateway.buildIpnResponse(IpnResult.ALREADY_PROCESSED);
+        // amount trong callback đã ×100; so bằng long để tránh bẫy scale của BigDecimal.equals
+        long expected = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
+        if(cb.amount() != expected) return paymentGateway.buildIpnResponse(IpnResult.INVALID_AMOUNT);
         payment.setRawResponse(params.toString());
-        payment.setTransactionNo(params.get("vnp_TransactionNo"));
+        payment.setTransactionNo(cb.providerTxnNo());
         Order order = payment.getOrder();
 
-        if("00".equals(params.get("vnp_ResponseCode"))) {
+        if(cb.success()) {
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setPaidAt(LocalDateTime.now());
             order.setStatus(OrderStatus.CONFIRMED);
@@ -86,7 +86,7 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.FAILED);
 
         // payment/order là managed → dirty checking tự flush khi commit, không cần save()
-        return new VnpayIpnResponse("00", "Confirm Success");
+        return paymentGateway.buildIpnResponse(IpnResult.SUCCESS);
     }
 
     /**
@@ -94,8 +94,8 @@ public class PaymentService {
      * TUYỆT ĐỐI không update DB: user có thể không bao giờ về tới đây (tắt tab) → IPN mới là nguồn cập nhật.
      */
     public String handleReturn(Map<String, String> params) {
-        if(!vnpayService.verifySignature(params)) throw new BusinessRuleException("Invalid signature");
-        return "00".equals(params.get("vnp_ResponseCode")) ? "Thanh toan thanh cong" : "Thanh toan that bai";
+        if(!paymentGateway.verifySignature(params)) throw new BusinessRuleException("Invalid signature");
+        return paymentGateway.parseCallback(params).success() ? "Thanh toan thanh cong" : "Thanh toan that bai";
     }
 
     /**

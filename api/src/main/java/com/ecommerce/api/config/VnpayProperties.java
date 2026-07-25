@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "vnpay")
+@ConfigurationProperties(prefix = "payment-gate.vnpay")
 public class VnpayProperties {
     private String tmnCode;
     private String hashSecret;
