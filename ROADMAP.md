@@ -99,7 +99,7 @@
 - [ ] **Cụm 2.3b** — Full optimistic lock (think-time): client gửi `version` (thêm vào Request + Response DTO) → bảo vệ lost-update kiểu stale-client, không chỉ race chồng lấn
 - [ ] **Cụm 5b** — `deleteImage` dùng `TransactionSynchronization.afterCommit()` (làm khi migrate S3)
 - [ ] Tách `StorageException` (500) khỏi `InvalidFileException` (400) — `LocalStorageService` lỗi I/O ghi file đang trả nhầm 400
-- [ ] **Flyway/Liquibase** thay `ddl-auto: update` (tránh schema drift, backfill có kiểm soát)
+- [x] **Flyway** thay `ddl-auto: update` → `validate` ✅ — `docs/4.0-flyway-migration.md`. flyway-core+mysql, `V1__baseline.sql` (baseline DB có sẵn, verify qua throwaway DB), `V2__drop_orphan_join_table.sql` (drop `carts_cart_items` mồ côi). Baseline-on-migrate + baseline-version=1
 - [ ] Password validation regex (hoặc lib passay)
 - [ ] Tách `ProductListItemResponse` vs `ProductDetailResponse` (tránh over-fetching list view)
 - [ ] Dọn property `app.name/version/description` thừa trong `application.yaml`
