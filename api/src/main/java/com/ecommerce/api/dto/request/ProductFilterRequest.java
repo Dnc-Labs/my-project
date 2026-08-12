@@ -18,4 +18,5 @@ public class ProductFilterRequest {
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private ProductStatus status;
+    private BigDecimal minRating;   // "từ N sao trở lên" — món nợ defer từ 3.3, giờ có cột thật để lọc
 }

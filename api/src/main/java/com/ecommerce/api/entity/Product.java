@@ -39,6 +39,16 @@ public class Product extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.ACTIVE;
 
+    // Denormalized từ bảng reviews để list/sort/filter theo rating không phải JOIN + AVG mỗi lần đọc.
+    // KHÔNG được set 2 field này bằng setter + dirty checking: đó là read-modify-write ở JVM,
+    // gây lost update và làm tăng version của Product (review chặn seller sửa sản phẩm).
+    // Luôn cập nhật qua ProductRepository.recomputeRating() — 1 câu UPDATE atomic ở DB.
+    @Column(name = "average_rating", nullable = false, precision = 3, scale = 2)
+    private BigDecimal averageRating = BigDecimal.ZERO;
+
+    @Column(name = "review_count", nullable = false)
+    private Integer reviewCount = 0;
+
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

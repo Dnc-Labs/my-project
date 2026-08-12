@@ -30,6 +30,8 @@ public class ProductResponse {
     private String sellerName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private BigDecimal averageRating;        // 0 nghĩa là chưa có review (rating hợp lệ tối thiểu là 1)
+    private Integer reviewCount;             // FE nên dựa vào field này để hiện "Chưa có đánh giá"
     private String primaryImageUrl;          // URL ảnh isPrimary, null nếu chưa upload
     private List<ProductImageResponse> images = Collections.emptyList();
 }

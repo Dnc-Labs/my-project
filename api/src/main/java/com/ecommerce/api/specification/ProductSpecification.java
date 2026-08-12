@@ -42,4 +42,12 @@ public class ProductSpecification {
     public static Specification<Product> hasStatus(ProductStatus status) {
         return (root, query, cb) -> cb.equal(root.get("status"), status);
     }
+
+    // "Từ N sao trở lên". Viết được gọn như priceGoe là phần thưởng của quyết định denormalize
+    // averageRating thành cột thật: nếu tính AVG lúc đọc, chỗ này phải là correlated subquery
+    // bằng Criteria API và sort=averageRating,desc gần như không viết nổi.
+    public static Specification<Product> ratingGoe(BigDecimal minRating) {
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("averageRating"), minRating);
+    }
+
 }

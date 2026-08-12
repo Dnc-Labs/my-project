@@ -81,6 +81,7 @@ public class ProductService {
         if (CheckData.checkIsNotNull(filter.getMinPrice()))   spec = spec.and(ProductSpecification.priceGoe(filter.getMinPrice()));
         if (CheckData.checkIsNotNull(filter.getMaxPrice()))   spec = spec.and(ProductSpecification.priceLoe(filter.getMaxPrice()));
         if (CheckData.checkIsNotNull(filter.getStatus()))     spec = spec.and(ProductSpecification.hasStatus(filter.getStatus()));
+        if(CheckData.checkIsNotNull(filter.getMinRating()))   spec = spec.and(ProductSpecification.ratingGoe(filter.getMinRating()));
 
         Page<ProductResponse> products = productRepository.findAll(spec, pageable).map(productMapper::fromEntity);
         return PageResponse.from(products);

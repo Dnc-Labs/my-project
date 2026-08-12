@@ -59,7 +59,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()     // login, register
                         .requestMatchers("/api/users").permitAll()       // tạm thời cho register
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/products/*/reviews/can-review").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/variants/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()  // serve static images
                         // VNPay gọi vào KHÔNG có token của mình → phải public. An toàn nhờ verify chữ ký HMAC,
