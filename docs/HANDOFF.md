@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-06-21
+**Cập nhật lần cuối:** 2026-08-12
 
 ---
 
@@ -22,6 +22,7 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **6.1 Review & Rating — CODE XONG** (test E2E để sau) — `docs/6.1-review-rating.md`. Entity `Review` (verified purchase đơn `DELIVERED`, `UNIQUE(user_id, product_id)`, soft delete ADMIN, CHECK rating 1..5) + `V3__create_reviews.sql` (migration đầu tiên cho feature mới) + 6 endpoint + `ratingGoe`/`minRating` (**trả xong món nợ 3.3**). **Điểm cốt lõi:** `averageRating`/`reviewCount` **denormalize** lên `products`, cập nhật bằng **1 câu native UPDATE atomic** `recomputeRating` — KHÔNG dirty checking. Docs có deep-dive **conflict vs contention** (vì sao `@Version` đúng ở `Review` nhưng phản tác dụng ở `averageRating`), 3 cách cập nhật an toàn, `AVG` trả NULL/`COALESCE`, ràng buộc SQL nào sinh index, `@EntityGraph` làm gì, `flushAutomatically` vs `clearAutomatically`, + **6 vòng review code** với ~11 lỗi thật.
 - ✅ **4.2 Order — CODE XONG** (test E2E + email để sau) — `docs/4.2-order.md`. Entity (snapshot price/total) + DTO (tách Summary/Detail) + Repository (`findByCustomerId`, `findWithItemById` @EntityGraph) + Mapper + Service (checkout atomic, **pessimistic lock qua `em.refresh(PESSIMISTIC_WRITE)`** chống oversell, state machine confirm/ship/deliver/cancel, phân quyền, hoàn stock khi cancel) + Controller (4 endpoint). Postman group "9. Order" đã thêm — **chưa chạy test**. Docs có deep-dive **concurrency lớn nhất dự án**: 3 cách chống oversell, `@Lock` syntax, isolation level vs lock, SELECT FOR UPDATE vs SERIALIZABLE, **stale-read gotcha** (pessimistic lock + entity pre-loaded → phải `em.refresh`), multi-node (DB lock vs JVM lock). Email xác nhận `@Async` CHƯA làm.
 - ✅ **4.1 Shopping Cart — CODE XONG** (test E2E để sau) — `docs/4.1-shopping-cart.md`. Entity (owning/inverse side) + DTO + Repository (`findExisting` xử lý variant NULL, `findWithItemsByUserId` `@EntityGraph` chống N+1 — lưu ý: "WithItems" phải đặt TRƯỚC "By" kẻo QueryCreationException) + Mapper (`@AfterMapping` tính live price/subtotal/total) + Service (get-or-create, merge cộng dồn, check stock theo tổng mới, ownership 404, ACTIVE check) + Controller (5 endpoint, user từ `@AuthenticationPrincipal`). Postman group "7. Cart" (15 request) đã thêm — **chưa chạy test**. Docs có 2 deep-dive lớn: **`reduce` Stream API** + **N+1 query** (verbatim Q&A).
 - ✅ **3.2.6 Buổi Cleanup Chuyên Sâu — HOÀN THÀNH** (production-grade hardening) — `docs/3.2.6-production-cleanup.md` (11 phần, lý thuyết + Q&A verbatim). Cụm 1 (Category circular) + 2.1 (`@Transactional`+OSIV) + 2.3 (`@Version` optimistic lock) + 2.4 (TOCTOU/`DataIntegrityViolation`→409) + 3 (BaseEntity+Auditing) + 3.6 (`@Slf4j`) + 4 (security exception/#7#8#9) + 5 (compensating tx `uploadImage`). **Buổi cleanup #1 đóng lại**, phần còn lại dời sang **buổi Cleanup #2 ở Giai đoạn 4** (ROADMAP mục 4.0).
@@ -110,6 +111,12 @@ Buổi Cleanup #1 (3.2.6) đã xong (8 cụm). Bài 3.3 search/filter/pagination
 Hôm nay bắt đầu Giai đoạn 4 (Cart/Order) theo ROADMAP.
 (Carry-over cleanup gom ở ROADMAP mục 4.0 — buổi Cleanup #2.)
 ```
+
+**Việc còn nợ ở 6.1 — Test E2E (13 kịch bản, chưa chạy).** Bật tạm `spring.jpa.show-sql: true` + `hibernate.format_sql: true` rồi chạy:
+
+*Luồng chính:* (1) chưa mua → POST review → 409; (2) đơn `SHIPPING` → vẫn 409 ← **phép thử quyết định cho việc bind `status` trong native query**; (3) đơn `DELIVERED` → 201 + `GET /api/products/{id}` thấy `averageRating`/`reviewCount` đổi ngay; (4) review lần 2 → 409.
+*Sửa/xoá:* (5) PUT 5★→1★ → avg giảm; (6) sửa mỗi `comment` → **không** có UPDATE `products` trong log (kiểm chứng `shouldRecompute`); (7) sửa review người khác → 404; (8) DELETE bằng CUSTOMER → 403, bằng ADMIN → OK, xoá review **cuối cùng** → avg về `0.00` ← **phép thử cho `COALESCE`**; (9) DELETE lần 2 → không lỗi (idempotent).
+*Đọc/filter:* (10) `GET /products/{id}/reviews` → đếm log phải **2 câu SELECT**, không phải 13; (11) `GET /reviews/me` → 2 câu + **không** thấy review đã gỡ; (12) `GET /products?minRating=4&sort=averageRating,desc`; (13) `can-review` không token → **401** (không phải 500).
 
 **Tiếp theo (đã chốt):** **4.1 Cart + 4.2 Order đã code xong** (test E2E để sau). Phần kế: **email xác nhận đơn `@Async` + JavaMailSender** (nốt của 4.2), rồi sang **Giai đoạn 5 (Thanh toán)** hoặc **buổi Cleanup #2** (mục 4.0 ROADMAP). 3.3.4 Elasticsearch defer (hạ tầng đã dựng).
 

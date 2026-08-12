@@ -86,7 +86,7 @@
 
 ### 3.3 - Tìm kiếm & Lọc sản phẩm
 - [x] Tìm kiếm theo tên, mô tả
-- [x] Lọc theo category, khoảng giá (rating defer — chờ Review entity ở 6.1)
+- [x] Lọc theo category, khoảng giá, **rating** (`minRating` + `ProductSpecification.ratingGoe` — hoàn thành ở 6.1)
 - [x] **Pagination** và **sorting** với `Pageable`
 - [ ] (Nâng cao) Tích hợp **Elasticsearch** cho full-text search
 
@@ -103,6 +103,7 @@
 - [ ] Password validation regex (hoặc lib passay)
 - [ ] Tách `ProductListItemResponse` vs `ProductDetailResponse` (tránh over-fetching list view)
 - [ ] Dọn property `app.name/version/description` thừa trong `application.yaml`
+- [ ] **Siết `Pageable` binding (allow-list cho `sort` + giới hạn `size`)** — phát hiện ở 6.1. Spring Data bind `sort` từ query param và nhận **bất kỳ property path nào** của entity, kể cả xuyên quan hệ: `GET /api/products/1/reviews?sort=user.password,desc` (endpoint **public**, không cần token) → thứ tự kết quả tiết lộ quan hệ lớn-bé giữa các password hash, đủ để dò dần. Ảnh hưởng **mọi endpoint có phân trang** (Product, Order, Cart, Review) nên sửa 1 lần cho cả dự án: allow-list field được phép sort + `spring.data.web.pageable.max-page-size`
 
 ### 4.1 - Shopping Cart ✅ (code xong, test E2E để sau)
 > Tài liệu: `docs/4.1-shopping-cart.md` (lý thuyết + Q&A verbatim, gồm deep-dive `reduce` và N+1 query)
@@ -140,9 +141,15 @@
 
 ## Giai đoạn 6: Tính năng nâng cao (2-3 tuần)
 
-### 6.1 - Review & Rating
-- [ ] `Review` entity, API đánh giá sản phẩm
-- [ ] Tính **average rating** cho sản phẩm
+### 6.1 - Review & Rating ✅ (code xong, test E2E để sau)
+> Tài liệu: `docs/6.1-review-rating.md` (nguyên văn: conflict vs contention, vì sao `@Version` phản tác dụng với `averageRating`, 3 cách cập nhật an toàn, `AVG`/`COALESCE`, index từ ràng buộc SQL, `@EntityGraph`, `clearAutomatically`, + 6 vòng review code)
+- [x] `Review` entity (verified purchase `DELIVERED`, `UNIQUE(user_id, product_id)`, soft delete, CHECK rating 1..5) — `V3__create_reviews.sql`
+- [x] Tính **average rating** — **denormalize** `average_rating`+`review_count` lên `products`, cập nhật bằng **1 câu native UPDATE atomic** (`recomputeRating` + `@Modifying(flushAutomatically, clearAutomatically)`) thay vì dirty checking → không lost update, không ô nhiễm `Product.version`
+- [x] 6 endpoint: list (public, phân trang) / create / update (chủ review) / soft-delete (ADMIN) / my-reviews / can-review
+- [x] `ratingGoe` + `minRating` → **trả xong món nợ 3.3**
+- [ ] Test E2E (13 kịch bản đã liệt kê ở `docs/HANDOFF.md`) — **chưa chạy**
+- [ ] Postman group cho Review
+- [ ] (optional) `ratingBreakdown` 5★→1★ bằng `GROUP BY rating` — tính khi đọc, KHÔNG denormalize
 
 ### 6.2 - Coupon & Discount
 - [ ] `Coupon` entity (mã giảm giá, % hoặc cố định, thời hạn, giới hạn sử dụng)
