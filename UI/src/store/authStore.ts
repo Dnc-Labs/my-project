@@ -11,6 +11,7 @@ interface AuthState {
   clear: () => void
   isAuthenticated: () => boolean
   hasRole: (role: Role) => boolean
+  isStaff: () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +27,10 @@ export const useAuthStore = create<AuthState>()(
       clear: () => set({ accessToken: null, refreshToken: null, user: null }),
       isAuthenticated: () => Boolean(get().accessToken && get().user),
       hasRole: (role) => get().user?.role === role,
+      isStaff: () => {
+        const role = get().user?.role
+        return role === "SELLER" || role === "ADMIN"
+      },
     }),
     {
       name: "ecommerce-auth",

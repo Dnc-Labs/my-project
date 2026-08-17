@@ -19,4 +19,12 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Component shadcn/ui cố ý export kèm helper (buttonVariants, badgeVariants, useFormField).
+    // Đây là quy ước của thư viện, đánh đổi lại là Fast Refresh không hot-reload được các file này.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

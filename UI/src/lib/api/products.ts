@@ -2,12 +2,23 @@ import { apiClient, unwrap } from "./client"
 import type {
   BaseResponse,
   CreateProductRequest,
+  PageResponse,
+  ProductFilterParams,
   ProductResponse,
   UpdateProductRequest,
 } from "@/types/api"
 
-export async function listProducts(): Promise<ProductResponse[]> {
-  const res = await apiClient.get<BaseResponse<ProductResponse[]>>("/products")
+/**
+ * GET /api/products — filter + phân trang.
+ * Backend bind query param trực tiếp vào ProductFilterRequest + Pageable,
+ * nên chỉ cần trải params ra; axios tự bỏ field undefined.
+ */
+export async function listProducts(
+  params: ProductFilterParams = {}
+): Promise<PageResponse<ProductResponse>> {
+  const res = await apiClient.get<BaseResponse<PageResponse<ProductResponse>>>("/products", {
+    params,
+  })
   return unwrap(res)
 }
 

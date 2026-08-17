@@ -1,19 +1,26 @@
+import { Suspense } from "react"
 import { Link, Outlet } from "react-router-dom"
-import { ShoppingBag } from "lucide-react"
+import { ShoppingBagIcon } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function AuthLayout() {
   return (
     <div className="flex min-h-dvh flex-col bg-muted/40">
       <header className="border-b border-border bg-background">
-        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 md:px-8">
-          <Link to="/" className="flex items-center gap-2 font-heading text-xl font-semibold tracking-tight">
-            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+        <div className="container-page flex h-16 items-center">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-heading text-xl font-semibold tracking-tight"
+          >
+            <ShoppingBagIcon className="size-5" aria-hidden="true" />
             <span>Marketplace</span>
           </Link>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <Outlet />
+        <Suspense fallback={<Skeleton className="h-96 w-full max-w-md rounded-xl" />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )

@@ -34,6 +34,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Màu trạng thái: mỗi màu có 1 tông nền và 1 tông chữ riêng để giữ contrast >= 4.5:1
+     khi dùng theo cặp bg-<name>/15 + text-<name>-foreground. */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 }
 
 :root {
@@ -64,6 +73,13 @@
   --border: oklch(0.922 0.005 256);
   --input: oklch(0.922 0.005 256);
   --ring: oklch(0.205 0.02 256);
+
+  --success: oklch(0.62 0.18 145);
+  --success-foreground: oklch(0.42 0.13 145);
+  --warning: oklch(0.75 0.16 75);
+  --warning-foreground: oklch(0.48 0.12 62);
+  --info: oklch(0.6 0.15 250);
+  --info-foreground: oklch(0.44 0.14 254);
 }
 
 .dark {
@@ -94,6 +110,14 @@
   --border: oklch(0.27 0.015 256);
   --input: oklch(0.27 0.015 256);
   --ring: oklch(0.708 0.015 256);
+
+  /* Dark mode dùng tông nhạt/desaturate hơn, không đảo ngược giá trị light. */
+  --success: oklch(0.7 0.16 145);
+  --success-foreground: oklch(0.84 0.13 145);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.88 0.12 82);
+  --info: oklch(0.68 0.13 250);
+  --info-foreground: oklch(0.84 0.09 250);
 }
 
 @layer base {
@@ -113,5 +137,36 @@
     font-weight: 600;
     letter-spacing: -0.01em;
     color: var(--color-foreground);
+  }
+  /* Giá tiền và số liệu bảng dùng chữ số đều bề ngang → không nhảy layout khi số đổi. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Bề rộng nội dung thống nhất toàn site, gutter giãn dần theo breakpoint. */
+  .container-page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 80rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
+  }
+}
+
+/* Người dùng bật "giảm chuyển động" ở hệ điều hành → tắt animation, giữ nguyên bố cục. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
