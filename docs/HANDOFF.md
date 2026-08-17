@@ -2,7 +2,7 @@
 
 > File này dành cho **bản thân tương lai** hoặc Claude trên máy mới — đọc file này trước khi bắt đầu phiên làm việc mới.
 
-**Cập nhật lần cuối:** 2026-08-12
+**Cập nhật lần cuối:** 2026-08-18
 
 ---
 
@@ -22,6 +22,13 @@ Phong cách hướng dẫn đầy đủ nằm ở **`CLAUDE.md`** (root của re
 ## 2. Tiến độ hiện tại
 
 ### Đã hoàn thành (theo thứ tự gần nhất → xa nhất)
+- ✅ **7. Frontend UI cho toàn bộ module 1→6 — XONG** — `docs/7-frontend-ui.md`. React 19 + Vite + Tailwind v4 + shadcn/ui trong `UI/`, phủ **100% endpoint** đã code (45 file mới, 24 file sửa). Storefront (catalog + lọc/sắp xếp/phân trang đồng bộ URL, chi tiết + biến thể + đánh giá, giỏ, checkout, VNPay, đơn hàng, hồ sơ) + khu quản trị (sản phẩm/ảnh/biến thể, danh mục cho ADMIN, xử lý trạng thái đơn). Không cần CORS ở backend — dùng dev proxy của Vite. `tsc`/`eslint`/`build` sạch.
+  > **3 phát hiện ở backend khi verify bằng HTTP thật** (chi tiết + hướng sửa ở mục 14 của docs):
+  > 1. **Module Review 6.1 lỗi runtime**: `can-review` và `POST review` đều **500** — `ClassCastException: Long cannot be cast to Boolean` ở `ReviewService.checkEligibility:145`, do native query `SELECT EXISTS(...)` của `verifiedPurchase` trả kiểu số mà repository khai `boolean`. **Cần sửa trước khi chạy E2E 6.1.**
+  > 2. `POST /api/carts/items` trả item có `id: null` (map DTO trước khi flush) → FE phải refetch.
+  > 3. Thiếu `sellerId` trong `ProductFilterRequest` + thiếu API list đơn cho SELLER/ADMIN.
+  >
+  > Thay đổi phía backend: **đúng 1 dòng config** — `payment-gate.vnpay.return-url` trỏ về `http://localhost:5173/payment/vnpay/return` (override bằng env `VNPAY_RETURN_URL`) để user thấy trang kết quả có UI thay vì JSON thô.
 - ✅ **6.1 Review & Rating — CODE XONG** (test E2E để sau) — `docs/6.1-review-rating.md`. Entity `Review` (verified purchase đơn `DELIVERED`, `UNIQUE(user_id, product_id)`, soft delete ADMIN, CHECK rating 1..5) + `V3__create_reviews.sql` (migration đầu tiên cho feature mới) + 6 endpoint + `ratingGoe`/`minRating` (**trả xong món nợ 3.3**). **Điểm cốt lõi:** `averageRating`/`reviewCount` **denormalize** lên `products`, cập nhật bằng **1 câu native UPDATE atomic** `recomputeRating` — KHÔNG dirty checking. Docs có deep-dive **conflict vs contention** (vì sao `@Version` đúng ở `Review` nhưng phản tác dụng ở `averageRating`), 3 cách cập nhật an toàn, `AVG` trả NULL/`COALESCE`, ràng buộc SQL nào sinh index, `@EntityGraph` làm gì, `flushAutomatically` vs `clearAutomatically`, + **6 vòng review code** với ~11 lỗi thật.
 - ✅ **4.2 Order — CODE XONG** (test E2E + email để sau) — `docs/4.2-order.md`. Entity (snapshot price/total) + DTO (tách Summary/Detail) + Repository (`findByCustomerId`, `findWithItemById` @EntityGraph) + Mapper + Service (checkout atomic, **pessimistic lock qua `em.refresh(PESSIMISTIC_WRITE)`** chống oversell, state machine confirm/ship/deliver/cancel, phân quyền, hoàn stock khi cancel) + Controller (4 endpoint). Postman group "9. Order" đã thêm — **chưa chạy test**. Docs có deep-dive **concurrency lớn nhất dự án**: 3 cách chống oversell, `@Lock` syntax, isolation level vs lock, SELECT FOR UPDATE vs SERIALIZABLE, **stale-read gotcha** (pessimistic lock + entity pre-loaded → phải `em.refresh`), multi-node (DB lock vs JVM lock). Email xác nhận `@Async` CHƯA làm.
 - ✅ **4.1 Shopping Cart — CODE XONG** (test E2E để sau) — `docs/4.1-shopping-cart.md`. Entity (owning/inverse side) + DTO + Repository (`findExisting` xử lý variant NULL, `findWithItemsByUserId` `@EntityGraph` chống N+1 — lưu ý: "WithItems" phải đặt TRƯỚC "By" kẻo QueryCreationException) + Mapper (`@AfterMapping` tính live price/subtotal/total) + Service (get-or-create, merge cộng dồn, check stock theo tổng mới, ownership 404, ACTIVE check) + Controller (5 endpoint, user từ `@AuthenticationPrincipal`). Postman group "7. Cart" (15 request) đã thêm — **chưa chạy test**. Docs có 2 deep-dive lớn: **`reduce` Stream API** + **N+1 query** (verbatim Q&A).

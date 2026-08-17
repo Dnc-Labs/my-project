@@ -165,6 +165,18 @@
 
 ---
 
+## Giai đoạn 7: Frontend UI ✅ (xong, phủ 100% endpoint module 1→6)
+> Tài liệu: `docs/7-frontend-ui.md` (nguyên văn: vì sao không áp design-system mặc định của skill, bẫy `stock = 0` của `UpdateProductRequest`, dev proxy thay CORS, mirror state machine đơn hàng ở FE, code-split theo route, + 3 bug backend phát hiện khi verify bằng HTTP thật)
+- [x] Nền tảng: `types/api.ts` mirror đúng DTO, 7 module API, 8 hook React Query, dev proxy `/api` + `/uploads` (không cần CORS ở backend)
+- [x] Storefront: trang chủ, danh sách sản phẩm (lọc danh mục/giá/rating + 5 kiểu sắp xếp + phân trang, trạng thái nằm trên URL), chi tiết sản phẩm (gallery, biến thể, tab mô tả/đánh giá)
+- [x] Mua hàng: giỏ, checkout, đơn hàng + timeline trạng thái, huỷ đơn, thanh toán VNPay + trang kết quả, hồ sơ, đánh giá của tôi
+- [x] Khu quản trị: bảng sản phẩm, form 3 tab (thông tin/ảnh/biến thể), quản lý danh mục dạng cây (ADMIN), xử lý trạng thái đơn
+- [x] Chất lượng: dark mode, skip-link, `errorElement`, `ScrollRestoration`, reduced-motion, code-split (bundle chính 771 kB → 449 kB), `tsc`/`eslint`/`build` sạch
+- [ ] **Nợ backend chặn tính năng đánh giá:** `verifiedPurchase` (native `SELECT EXISTS`) gây `ClassCastException: Long → Boolean` → `can-review` và `POST review` đều 500
+- [ ] Nợ backend: flush trước khi map ở `CartService` (`POST /carts/items` trả `id: null`); thêm `sellerId` vào `ProductFilterRequest`; API list đơn cho SELLER/ADMIN
+
+---
+
 ## Giai đoạn 7: Tối ưu & Production-ready (2 tuần)
 
 - [ ] **Caching** với Redis (cache sản phẩm, session...)
