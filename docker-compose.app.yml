@@ -1,0 +1,74 @@
+# =============================================================================
+# Stack ĐÓNG GÓI ĐẦY ĐỦ: MySQL + API (Spring Boot) + UI (React/nginx)
+#
+# KHÁC với docker-compose.yml:
+#   docker-compose.yml      = hạ tầng dev (MySQL + Elasticsearch + Kibana),
+#                             dùng khi chạy API/UI từ IDE
+#   docker-compose.app.yml  = CHẠY TẤT CẢ trong container, giống production
+#
+# Phải khai -f ở MỌI lệnh, nếu không compose sẽ đọc docker-compose.yml:
+#   docker compose -f docker-compose.app.yml up -d --build
+#   docker compose -f docker-compose.app.yml logs -f ecom-api
+#   docker compose -f docker-compose.app.yml down       dừng, GIỮ volume
+#   docker compose -f docker-compose.app.yml down -v    dừng, XOÁ CẢ DỮ LIỆU DB
+#
+# Lưu ý: file này KHÔNG dựng Elasticsearch. App vẫn chạy được (ES chỉ dùng cho
+# search; thiếu nó app ghi log INFO rồi bỏ qua) — đã kiểm chứng.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # MySQL — không mở cổng ra host. Chỉ API gọi tới qua mạng nội bộ của compose.
+  # ---------------------------------------------------------------------------
+  ecom-mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: ecommerce
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # depends_on thường chỉ đợi container KHỞI ĐỘNG, không đợi MySQL SẴN SÀNG.
+      # Healthcheck này là thứ biến "đã chạy" thành "đã dùng được".
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-padmin"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s     # lần đầu phải khởi tạo data directory, ~30s
+
+  # ---------------------------------------------------------------------------
+  # API — build từ api/Dockerfile (multi-stage, non-root)
+  # ---------------------------------------------------------------------------
+  ecom-api:
+    build: ./api
+    depends_on:
+      ecom-mysql:
+        condition: service_healthy    # CHỜ healthcheck xanh mới khởi động
+    environment:
+      # Relaxed binding: spring.datasource.url -> SPRING_DATASOURCE_URL
+      # "ecom-mysql" là TÊN SERVICE ở trên — compose tự tạo DNS cho nó.
+      SPRING_DATASOURCE_URL: jdbc:mysql://ecom-mysql:3306/ecommerce
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: admin
+      MAIL_USERNAME: noreply@localhost
+      MAIL_PASSWORD: khong-dung
+    volumes:
+      # Ảnh upload phải sống qua docker compose down, nên để volume.
+      - uploads:/app/uploads
+    ports:
+      - "8080:8080"      # CHỈ để học/debug (swagger). Lên production thì XOÁ dòng này.
+
+  # ---------------------------------------------------------------------------
+  # UI — build từ UI/Dockerfile, nginx phục vụ file tĩnh + proxy /api
+  # ---------------------------------------------------------------------------
+  ecom-ui:
+    build: ./UI
+    depends_on:
+      - ecom-api       # chỉ cần container ecom-api TỒN TẠI để nginx phân giải được tên
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql-data:
+  uploads:
